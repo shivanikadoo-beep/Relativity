@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relativity — A Deep Course</title>
+<style>
+:root {
+  --bg: #0e0a0b;
+  --bg2: #1a1214;
+  --bg3: #231719;
+  --border: #3a2a2d;
+  --text: #e8ddd0;
+  --muted: #a89080;
+  --accent1: #D3545F;
+  --accent2: #8C698C;
+  --gold: #C9954A;
+  --wine: #5F3C3F;
+  --sidebar-w: 310px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'DM Sans',system-ui,sans-serif; background:var(--bg); color:var(--text); height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
+
+/* TOP BAR */
+.topbar { height:52px; background:var(--bg2); border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 20px; gap:16px; flex-shrink:0; }
+.topbar-logo { font-family:'Playfair Display',serif; font-size:17px; color:var(--text); letter-spacing:0.5px; }
+.topbar-logo span { color:var(--accent1); }
+.progress-bar { flex:1; height:3px; background:var(--border); border-radius:2px; }
+.progress-fill { height:100%; background:linear-gradient(90deg,var(--accent1),var(--gold)); border-radius:2px; transition:width 0.4s; }
+.progress-label { font-size:11px; color:var(--muted); font-family:'DM Mono',monospace; }
+
+/* MAIN LAYOUT */
+.main { display:flex; flex:1; overflow:hidden; }
+
+/* SIDEBAR */
+.sidebar { width:var(--sidebar-w); background:var(--bg2); border-right:1px solid var(--border); overflow-y:auto; flex-shrink:0; }
+.sidebar::-webkit-scrollbar { width:4px; }
+.sidebar::-webkit-scrollbar-track { background:transparent; }
+.sidebar::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+.mod-block { border-bottom:1px solid var(--border); }
+.mod-header { display:flex; align-items:center; gap:8px; padding:12px 14px; cursor:pointer; user-select:none; transition:background 0.15s; }
+.mod-header:hover { background:var(--bg3); }
+.mod-num { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted); background:var(--border); padding:2px 5px; border-radius:3px; flex-shrink:0; }
+.mod-title { font-size:12px; font-weight:600; flex:1; line-height:1.3; }
+.mod-arrow { font-size:10px; color:var(--muted); transition:transform 0.2s; }
+.mod-header.open .mod-arrow { transform:rotate(180deg); }
+.mod-lessons { display:none; }
+.mod-lessons.open { display:block; }
+.lesson-item { display:flex; align-items:flex-start; gap:8px; padding:9px 14px 9px 28px; cursor:pointer; transition:background 0.12s; border-left:2px solid transparent; }
+.lesson-item:hover { background:var(--bg3); }
+.lesson-item.active { background:var(--bg3); border-left-color:var(--accent1); }
+.lesson-item.completed { opacity:0.7; }
+.lesson-num { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted); flex-shrink:0; margin-top:2px; }
+.lesson-title { font-size:12px; line-height:1.4; flex:1; }
+.lesson-done { font-size:9px; color:var(--gold); opacity:0; flex-shrink:0; margin-top:2px; }
+.lesson-item.completed .lesson-done { opacity:1; }
+
+/* CONTENT AREA */
+.content-area { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+
+/* HOME SCREEN */
+.home-screen { flex:1; overflow-y:auto; padding:48px; }
+.home-screen::-webkit-scrollbar { width:4px; }
+.home-screen::-webkit-scrollbar-thumb { background:var(--border); }
+.home-hero { max-width:640px; margin:0 auto; }
+.home-hero h1 { font-family:'Playfair Display',serif; font-size:38px; line-height:1.2; margin-bottom:8px; }
+.home-hero h1 em { font-style:italic; color:var(--accent1); }
+.home-hero .subtitle { font-size:15px; color:var(--muted); margin-bottom:32px; line-height:1.7; }
+.home-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:32px; }
+.home-card { background:var(--bg2); border:1px solid var(--border); border-radius:8px; padding:16px; cursor:pointer; transition:border-color 0.15s, transform 0.15s; }
+.home-card:hover { border-color:var(--accent1); transform:translateY(-1px); }
+.home-card-mod { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted); margin-bottom:6px; }
+.home-card-title { font-size:13px; font-weight:600; margin-bottom:4px; }
+.home-card-count { font-size:11px; color:var(--muted); }
+.home-note { font-size:12px; color:var(--muted); line-height:1.7; background:var(--bg2); border:1px solid var(--border); border-left:3px solid var(--gold); border-radius:4px; padding:14px 16px; }
+
+/* LESSON VIEW */
+.lesson-view { flex:1; overflow-y:auto; padding:40px 48px; display:none; }
+.lesson-view::-webkit-scrollbar { width:4px; }
+.lesson-view::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+.lesson-view.active { display:block; }
+.lesson-meta { display:flex; align-items:center; gap:10px; margin-bottom:20px; }
+.lesson-mod-badge { font-family:'DM Mono',monospace; font-size:9px; padding:3px 8px; border-radius:3px; background:var(--wine); color:var(--text); }
+.lesson-num-badge { font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); }
+.lesson-nav { display:flex; gap:8px; margin-left:auto; }
+.nav-btn { font-size:11px; padding:5px 12px; background:var(--bg2); border:1px solid var(--border); border-radius:4px; color:var(--muted); cursor:pointer; transition:all 0.15s; font-family:'DM Sans',sans-serif; }
+.nav-btn:hover { border-color:var(--accent1); color:var(--text); }
+.lesson-title-h { font-family:'Playfair Display',serif; font-size:26px; line-height:1.25; margin-bottom:24px; }
+.lesson-body p.intro { font-size:16px; color:var(--muted); line-height:1.8; margin-bottom:24px; font-style:italic; }
+.lesson-body h3 { font-family:'Playfair Display',serif; font-size:17px; margin:28px 0 12px; color:var(--text); }
+.lesson-body p { font-size:14px; line-height:1.85; color:var(--text); margin-bottom:14px; }
+.lesson-body strong { color:var(--text); font-weight:600; }
+.lesson-body em { color:var(--muted); }
+
+/* BOXES */
+.box { border-radius:6px; padding:16px 18px; margin:20px 0; }
+.box b { display:block; font-size:10px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; margin-bottom:10px; }
+.box p { font-size:13.5px; line-height:1.8; margin:0; }
+.box.key { background:var(--bg2); border-left:3px solid var(--accent1); }
+.box.key b { color:var(--accent1); }
+.box.eq { background:#130f0a; border:1px solid #3d2f15; }
+.box.eq b { color:var(--gold); }
+.eqf { font-family:'DM Mono',monospace; font-size:15px; color:var(--gold); padding:10px 0 8px; letter-spacing:0.3px; }
+.eqs { font-size:12px; color:var(--muted); line-height:1.7; border-top:1px solid #3d2f15; padding-top:10px; margin-top:4px; }
+.box.ex { background:var(--bg2); border-left:3px solid var(--accent2); }
+.box.ex b { color:var(--accent2); }
+.box.note { background:var(--bg2); border-left:3px solid var(--wine); }
+.box.note b { color:#b06060; }
+.box.ref { background:var(--bg3); border:1px solid var(--border); }
+.box.ref b { color:var(--muted); }
+.box.ref p { font-size:12px; color:var(--muted); font-style:italic; }
+.summary { background:var(--bg2); border:1px solid var(--border); border-radius:6px; padding:18px 20px; margin:28px 0 8px; }
+.summary h4 { font-size:10px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:var(--gold); margin-bottom:12px; }
+.summary ul { padding-left:0; list-style:none; }
+.summary li { font-size:13px; line-height:1.7; color:var(--muted); padding:5px 0 5px 18px; position:relative; border-bottom:1px solid var(--border); }
+.summary li:last-child { border-bottom:none; }
+.summary li::before { content:'—'; position:absolute; left:0; color:var(--accent1); }
+.mark-done-btn { display:inline-flex; align-items:center; gap:6px; font-size:12px; padding:8px 16px; background:transparent; border:1px solid var(--border); border-radius:4px; color:var(--muted); cursor:pointer; margin-top:12px; font-family:'DM Sans',sans-serif; transition:all 0.15s; }
+.mark-done-btn:hover { border-color:var(--gold); color:var(--gold); }
+.mark-done-btn.done { border-color:var(--gold); color:var(--gold); background:#1a1208; }
+
+/* Q&A PANEL */
+.qa-panel { border-top:1px solid var(--border); background:var(--bg2); flex-shrink:0; }
+.qa-panel.closed { height:48px; overflow:hidden; }
+.qa-header { display:flex; align-items:center; gap:10px; padding:12px 20px; cursor:pointer; user-select:none; }
+.qa-header-title { font-size:12px; font-weight:600; flex:1; }
+.qa-header-badge { font-size:9px; font-family:'DM Mono',monospace; background:var(--accent2); color:#fff; padding:2px 6px; border-radius:3px; }
+.qa-toggle { font-size:11px; color:var(--muted); }
+.qa-body { padding:0 20px 16px; max-height:360px; overflow-y:auto; }
+.qa-body::-webkit-scrollbar { width:3px; }
+.qa-body::-webkit-scrollbar-thumb { background:var(--border); }
+.qa-msgs { min-height:60px; margin-bottom:12px; }
+.qa-msg { margin-bottom:14px; }
+.qa-msg-role { font-size:9px; font-family:'DM Mono',monospace; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
+.qa-msg-text { font-size:13px; line-height:1.7; }
+.qa-msg.assistant .qa-msg-text { color:var(--text); }
+.qa-msg.user .qa-msg-text { color:var(--muted); }
+.qa-input-row { display:flex; gap:8px; }
+.qa-input { flex:1; background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:8px 12px; font-size:13px; color:var(--text); font-family:'DM Sans',sans-serif; resize:none; height:38px; transition:border-color 0.15s; }
+.qa-input:focus { outline:none; border-color:var(--accent2); }
+.qa-send { padding:8px 14px; background:var(--accent2); border:none; border-radius:4px; color:#fff; font-size:12px; cursor:pointer; font-family:'DM Sans',sans-serif; font-weight:600; flex-shrink:0; transition:opacity 0.15s; }
+.qa-send:disabled { opacity:0.4; cursor:not-allowed; }
+.qa-thinking { font-size:12px; color:var(--muted); font-style:italic; padding:8px 0; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">Rela<span>tivity</span></div>
+  <div class="progress-bar"><div class="progress-fill" id="pf" style="width:0%"></div></div>
+  <div class="progress-label" id="pl">0 / 34</div>
+</div>
+
+<div class="main">
+  <div class="sidebar" id="sidebar"><div class="mod-block"><div class="mod-header" onclick="toggleMod(this)" data-color="#8C698C"><span class="mod-num">M01</span><span class="mod-title">The Pre-Einstein Crisis</span><span class="mod-arrow">▾</span></div><div class="mod-lessons"><div class="lesson-item" id="li-1.1" onclick="openLesson('1.1')"><span class="lesson-num">1.1</span><span class="lesson-title">Galilean Relativity and Absolute Space</span><span class="lesson-done" id="ld-1.1">✓</span></div><div class="lesson-item" id="li-1.2" onclick="openLesson('1.2')"><span class="lesson-num">1.2</span><span class="lesson-title">Maxwell's Equations and the Light Problem</span><span class="lesson-done" id="ld-1.2">✓</span></div><div class="lesson-item" id="li-1.3" onclick="openLesson('1.3')"><span class="lesson-num">1.3</span><span class="lesson-title">The Michelson-Morley Experiment</span><span class="lesson-done" id="ld-1.3">✓</span></div><div class="lesson-item" id="li-1.4" onclick="openLesson('1.4')"><span class="lesson-num">1.4</span><span class="lesson-title">Lorentz and Poincaré — The Near-Misses</span><span class="lesson-done" id="ld-1.4">✓</span></div></div></div><div class="mod-block"><div class="mod-header" onclick="toggleMod(this)" data-color="#D3545F"><span class="mod-num">M02</span><span class="mod-title">Special Relativity</span><span class="mod-arrow">▾</span></div><div class="mod-lessons"><div class="lesson-item" id="li-2.1" onclick="openLesson('2.1')"><span class="lesson-num">2.1</span><span class="lesson-title">Einstein's Two Postulates</span><span class="lesson-done" id="ld-2.1">✓</span></div><div class="lesson-item" id="li-2.2" onclick="openLesson('2.2')"><span class="lesson-num">2.2</span><span class="lesson-title">The Death of Absolute Simultaneity</span><span class="lesson-done" id="ld-2.2">✓</span></div><div class="lesson-item" id="li-2.3" onclick="openLesson('2.3')"><span class="lesson-num">2.3</span><span class="lesson-title">Time Dilation — Derived from First Principles</span><span class="lesson-done" id="ld-2.3">✓</span></div><div class="lesson-item" id="li-2.4" onclick="openLesson('2.4')"><span class="lesson-num">2.4</span><span class="lesson-title">Length Contraction and the Ladder Paradox</span><span class="lesson-done" id="ld-2.4">✓</span></div><div class="lesson-item" id="li-2.5" onclick="openLesson('2.5')"><span class="lesson-num">2.5</span><span class="lesson-title">Lorentz Transformations and Velocity Addition</span><span class="lesson-done" id="ld-2.5">✓</span></div></div></div><div class="mod-block"><div class="mod-header" onclick="toggleMod(this)" data-color="#C9954A"><span class="mod-num">M03</span><span class="mod-title">Geometry of Spacetime</span><span class="mod-arrow">▾</span></div><div class="mod-lessons"><div class="lesson-item" id="li-3.1" onclick="openLesson('3.1')"><span class="lesson-num">3.1</span><span class="lesson-title">Minkowski Spacetime — The Stage of All Physics</span><span class="lesson-done" id="ld-3.1">✓</span></div><div class="lesson-item" id="li-3.2" onclick="openLesson('3.2')"><span class="lesson-num">3.2</span><span class="lesson-title">The Spacetime Interval — What Is Truly Invariant</span><span class="lesson-done" id="ld-3.2">✓</span></div><div class="lesson-item" id="li-3.3" onclick="openLesson('3.3')"><span class="lesson-num">3.3</span><span class="lesson-title">Reading Minkowski Diagrams</span><span class="lesson-done" id="ld-3.3">✓</span></div><div class="lesson-item" id="li-3.4" onclick="openLesson('3.4')"><span class="lesson-num">3.4</span><span class="lesson-title">The Twin Paradox — Fully Resolved</span><span class="lesson-done" id="ld-3.4">✓</span></div><div class="lesson-item" id="li-3.5" onclick="openLesson('3.5')"><span class="lesson-num">3.5</span><span class="lesson-title">Causality, Light Cones, and the Structure of Time</span><span class="lesson-done" id="ld-3.5">✓</span></div></div></div><div class="mod-block"><div class="mod-header" onclick="toggleMod(this)" data-color="#5F3C3F"><span class="mod-num">M04</span><span class="mod-title">Mass, Energy and Momentum</span><span class="mod-arrow">▾</span></div><div class="mod-lessons"><div class="lesson-item" id="li-4.1" onclick="openLesson('4.1')"><span class="lesson-num">4.1</span><span class="lesson-title">E = mc² — Derivation and Deep Meaning</span><span class="lesson-done" id="ld-4.1">✓</span></div><div class="lesson-item" id="li-4.2" onclick="openLesson('4.2')"><span class="lesson-num">4.2</span><span class="lesson-title">Relativistic Momentum and the Speed Limit</span><span class="lesson-done" id="ld-4.2">✓</span></div><div class="lesson-item" id="li-4.3" onclick="openLesson('4.3')"><span class="lesson-num">4.3</span><span class="lesson-title">Four-Vectors — The Elegant Unification</span><span class="lesson-done" id="ld-4.3">✓</span></div></div></div><div class="mod-block"><div class="mod-header" onclick="toggleMod(this)" data-color="#8C698C"><span class="mod-num">M05</span><span class="mod-title">General Relativity</span><span class="mod-arrow">▾</span></div><div class="mod-lessons"><div class="lesson-item" id="li-5.1" onclick="openLesson('5.1')"><span class="lesson-num">5.1</span><span class="lesson-title">The Equivalence Principle</span><span class="lesson-done" id="ld-5.1">✓</span></div><div class="lesson-item" id="li-5.2" onclick="openLesson('5.2')"><span class="lesson-num">5.2</span><span class="lesson-title">Curved Spacetime — Geometry as Physics</span><span class="lesson-done" id="ld-5.2">✓</span></div><div class="lesson-item" id="li-5.3" onclick="openLesson('5.3')"><span class="lesson-num">5.3</span><span class="lesson-title">Geodesics — The Straightest Paths Possible</span><span class="lesson-done" id="ld-5.3">✓</span></div><div class="lesson-item" id="li-5.4" onclick="openLesson('5.4')"><span class="lesson-num">5.4</span><span class="lesson-title">Einstein's Field Equations</span><span class="lesson-done" id="ld-5.4">✓</span></div><div class="lesson-item" id="li-5.5" onclick="openLesson('5.5')"><span class="lesson-num">5.5</span><span class="lesson-title">The Schwarzschild Solution</span><span class="lesson-done" id="ld-5.5">✓</span></div></div></div><div class="mod-block"><div class="mod-header" onclick="toggleMod(this)" data-color="#D3545F"><span class="mod-num">M06</span><span class="mod-title">Experimental Triumphs</span><span class="mod-arrow">▾</span></div><div class="mod-lessons"><div class="lesson-item" id="li-6.1" onclick="openLesson('6.1')"><span class="lesson-num">6.1</span><span class="lesson-title">Mercury's Perihelion — The First Confirmation</span><span class="lesson-done" id="ld-6.1">✓</span></div><div class="lesson-item" id="li-6.2" onclick="openLesson('6.2')"><span class="lesson-num">6.2</span><span class="lesson-title">Gravitational Lensing and the 1919 Eclipse</span><span class="lesson-done" id="ld-6.2">✓</span></div><div class="lesson-item" id="li-6.3" onclick="openLesson('6.3')"><span class="lesson-num">6.3</span><span class="lesson-title">Gravitational Time Dilation and GPS</span><span class="lesson-done" id="ld-6.3">✓</span></div><div class="lesson-item" id="li-6.4" onclick="openLesson('6.4')"><span class="lesson-num">6.4</span><span class="lesson-title">Black Holes — From Theory to First Image</span><span class="lesson-done" id="ld-6.4">✓</span></div><div class="lesson-item" id="li-6.5" onclick="openLesson('6.5')"><span class="lesson-num">6.5</span><span class="lesson-title">Gravitational Waves — LIGO and New Astronomy</span><span class="lesson-done" id="ld-6.5">✓</span></div></div></div><div class="mod-block"><div class="mod-header" onclick="toggleMod(this)" data-color="#C9954A"><span class="mod-num">M07</span><span class="mod-title">Relativity and the Cosmos</span><span class="mod-arrow">▾</span></div><div class="mod-lessons"><div class="lesson-item" id="li-7.1" onclick="openLesson('7.1')"><span class="lesson-num">7.1</span><span class="lesson-title">Friedmann Equations — GR Applied to the Universe</span><span class="lesson-done" id="ld-7.1">✓</span></div><div class="lesson-item" id="li-7.2" onclick="openLesson('7.2')"><span class="lesson-num">7.2</span><span class="lesson-title">Hubble's Discovery and What Expansion Means</span><span class="lesson-done" id="ld-7.2">✓</span></div><div class="lesson-item" id="li-7.3" onclick="openLesson('7.3')"><span class="lesson-num">7.3</span><span class="lesson-title">Superluminal Recession — No Contradiction</span><span class="lesson-done" id="ld-7.3">✓</span></div><div class="lesson-item" id="li-7.4" onclick="openLesson('7.4')"><span class="lesson-num">7.4</span><span class="lesson-title">Dark Energy and the Accelerating Universe</span><span class="lesson-done" id="ld-7.4">✓</span></div></div></div><div class="mod-block"><div class="mod-header" onclick="toggleMod(this)" data-color="#5F3C3F"><span class="mod-num">M08</span><span class="mod-title">The Open Frontier</span><span class="mod-arrow">▾</span></div><div class="mod-lessons"><div class="lesson-item" id="li-8.1" onclick="openLesson('8.1')"><span class="lesson-num">8.1</span><span class="lesson-title">Where General Relativity Breaks Down</span><span class="lesson-done" id="ld-8.1">✓</span></div><div class="lesson-item" id="li-8.2" onclick="openLesson('8.2')"><span class="lesson-num">8.2</span><span class="lesson-title">Quantum Gravity — The Unsolved Problem</span><span class="lesson-done" id="ld-8.2">✓</span></div><div class="lesson-item" id="li-8.3" onclick="openLesson('8.3')"><span class="lesson-num">8.3</span><span class="lesson-title">Relativity's Philosophical Legacy</span><span class="lesson-done" id="ld-8.3">✓</span></div></div></div></div>
+  
+  <div class="content-area">
+    <!-- HOME -->
+    <div class="home-screen" id="home">
+      <div class="home-hero">
+        <h1>Einstein's <em>Relativity</em><br>A Deep Course</h1>
+        <p class="subtitle">34 lessons across 8 modules — from the pre-Einstein crisis through quantum gravity. Static content, full depth, API-powered Q&A panel throughout.</p>
+        <div class="home-grid" id="home-grid"></div>
+        <div class="home-note">
+          <strong style="color:var(--gold)">On depth:</strong> Lessons build on established knowledge — the course assumes you know that relativity is a theory of invariants, that superluminal recession is consistent with SR, and that the twin paradox resolves geometrically. The Q&A panel below is live and context-aware throughout.
+        </div>
+      </div>
+    </div>
+
+    <!-- LESSON -->
+    <div class="lesson-view" id="lv">
+      <div class="lesson-meta">
+        <span class="lesson-mod-badge" id="lm-badge"></span>
+        <span class="lesson-num-badge" id="lm-num"></span>
+        <div class="lesson-nav">
+          <button class="nav-btn" onclick="navLesson(-1)">← Prev</button>
+          <button class="nav-btn" onclick="navLesson(1)">Next →</button>
+          <button class="nav-btn" onclick="showHome()">⌂ Home</button>
+        </div>
+      </div>
+      <h2 class="lesson-title-h" id="lt"></h2>
+      <div class="lesson-body" id="lb2"></div>
+      <button class="mark-done-btn" id="mdb" onclick="markDone()">Mark complete</button>
+    </div>
+
+    <!-- Q&A -->
+    <div class="qa-panel closed" id="qap">
+      <div class="qa-header" onclick="toggleQA()">
+        <span class="qa-header-title">Ask a question about this lesson</span>
+        <span class="qa-header-badge">AI Q&A</span>
+        <span class="qa-toggle" id="qa-toggle">▲</span>
+      </div>
+      <div class="qa-body">
+        <div class="qa-msgs" id="qa-msgs"></div>
+        <div class="qa-input-row">
+          <textarea class="qa-input" id="qa-in" placeholder="Ask anything about the current lesson…" onkeydown="qaKeydown(event)"></textarea>
+          <button class="qa-send" id="qa-send" onclick="sendQA()">Ask</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const C = {
+  "1.1": `<p class="intro">Before Einstein, physics rested on two invisible pillars nobody questioned: that space is absolute and fixed, and that time flows uniformly everywhere for everyone. Dismantling both required first understanding why they were assumed at all.</p>
+<h3>Galileo's Principle</h3>
+<p>In his 1632 <em>Dialogue Concerning the Two Chief World Systems</em>, Galileo asked readers to imagine being below the deck of a smoothly sailing ship. Watching fish swim in a bowl, throwing balls, dripping water — nothing would reveal whether the ship was at rest in harbour or moving at constant speed. The physics is identical either way. This is the <strong>Galilean principle of relativity</strong>: the laws of mechanics are the same in all reference frames moving at constant velocity relative to one another. Such frames are called <strong>inertial frames</strong>.</p>
+<div class="box eq"><b>Galilean Transformation</b><div class="eqf">x&prime; = x &minus; vt &nbsp;&nbsp;&nbsp; t&prime; = t</div><div class="eqs">Position changes between frames; time does not. The t&prime;=t identity was considered too obvious to state explicitly. That silence cost two centuries of physics.</div></div>
+<h3>Newton's Absolute Framework</h3>
+<p>Newton inherited Galileo's relativity but added something Galileo never needed: <strong>absolute space</strong> and <strong>absolute time</strong>. In the <em>Principia</em> (1687), absolute space is a fixed, immovable background against which true motions are measured. Absolute time flows uniformly everywhere, independent of any external influence. Leibniz attacked Newton on precisely this ground: if absolute space is undetectable by any mechanical experiment, what work does it do? Newton's bucket argument was meant to answer this — the concave water surface reveals rotation relative to absolute space. Mach rejected this two centuries later. Einstein would prove Mach essentially right.</p>
+<div class="box ex"><b>Thought Experiment</b><p>You wake up in a sealed, windowless cabin. Drop a ball, swing a pendulum, measure forces. Can you determine whether you are at rest or moving at a steady 900 km/h? No — Galilean relativity guarantees it. But now replace the mechanical experiments with measurements of light. That is precisely where classical physics breaks.</p></div>
+<div class="box note"><b>Misconception</b><p>"Galilean relativity already says everything is relative." It says only the <em>laws of mechanics</em> are frame-independent. It says nothing about electromagnetism or light. That gap is what created the crisis forcing Einstein's hand.</p></div>
+<div class="box ref"><b>Reference</b><p>Galilei, G. (1632). <em>Dialogo sopra i due massimi sistemi del mondo</em>. Florence: Landini. / Newton, I. (1687). <em>Philosophiae Naturalis Principia Mathematica</em>. London: Pepys.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>Galileo established that mechanical laws are identical in all inertial frames — no experiment done inside can detect uniform motion.</li><li>The Galilean transformation leaves time unchanged: t&prime; = t was so obvious it went unstated, until Einstein dismantled it.</li><li>Newton's absolute space and time were philosophically contested from the start and survived only because no experiment could reach them — until Maxwell's equations did.</li></ul></div>`,
+  "1.2": `<p class="intro">In 1865, James Clerk Maxwell unified electricity and magnetism into four elegant equations — and inadvertently detonated classical physics. Hidden inside the equations was a number that no one knew what to do with.</p>
+<h3>Maxwell's Equations and Their Uncomfortable Prediction</h3>
+<p>Maxwell showed that changing electric fields generate magnetic fields and vice versa, producing self-sustaining waves. The speed of these waves falls directly from two measurable constants of free space. The result matches the measured speed of light exactly. Light is an electromagnetic wave. This was one of the great unifications in science. But it immediately raised a question nobody could answer: <strong>c relative to what?</strong></p>
+<div class="box eq"><b>Speed of Light from Maxwell's Constants</b><div class="eqf">c = 1 / &radic;(&epsilon;&sub;0;&mu;&sub;0;)</div><div class="eqs">&epsilon;&sub;0; = electric permittivity of free space; &mu;&sub;0; = magnetic permeability of free space. Neither depends on the observer's motion. Maxwell's equations have no reference to a frame — they give the same c everywhere.</div></div>
+<h3>The Aether Hypothesis</h3>
+<p>Sound travels relative to a medium. It seemed necessary that light waves also travel relative to a medium: the <strong>luminiferous aether</strong> — an invisible, rigid, weightless substance filling all of space. Earth, orbiting the Sun at ~30 km/s, must be moving through this aether, creating an "aether wind" that would cause measurable variations in the speed of light in different directions. This was a testable prediction. Michelson and Morley built the instrument to test it.</p>
+<div class="box ex"><b>The Frame Problem</b><p>In Galilean relativity, if you throw a ball at 20 m/s from a train moving at 30 m/s, a stationary observer measures the ball at 50 m/s. Classical reasoning demanded the same for light: Earth moving at 30 km/s through the aether should make light measure as c+30 km/s in that direction. Maxwell's equations give c regardless. One of these frameworks had to be wrong.</p></div>
+<div class="box note"><b>Misconception</b><p>The aether was not a fringe idea — it was the mainstream, consensus position of every serious physicist including Maxwell himself. Rejecting it required extraordinary evidence. Michelson and Morley provided it; accepting the implication required Einstein.</p></div>
+<div class="box ref"><b>Reference</b><p>Maxwell, J.C. (1865). A dynamical theory of the electromagnetic field. <em>Philosophical Transactions of the Royal Society of London</em>, 155, 459–512.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>Maxwell's equations predict light speed directly from physical constants, with no reference to any observer's motion — a frame-independent c.</li><li>Classical physics demanded a medium for wave propagation: the aether. Earth's motion through it should be detectable as directional variation in measured c.</li><li>The conflict between Maxwell's constant c and Galilean velocity addition was the core crisis — resolved by Einstein taking Maxwell's side entirely.</li></ul></div>`,
+  "1.3": `<p class="intro">In 1887, Albert Michelson and Edward Morley built the most sensitive optical instrument of their era to detect Earth's motion through the aether. Their experiment returned the most consequential null result in the history of physics.</p>
+<h3>The Interferometer</h3>
+<p>Michelson's interferometer splits a beam of light into two perpendicular paths of equal length, reflects both off mirrors, and recombines them. If the two beams travel at different speeds due to an aether wind, they arrive out of phase, producing a detectable interference pattern shift. The device could resolve path differences smaller than a fraction of a light wavelength. Earth's orbital speed of ~30 km/s through the aether should produce an easily visible fringe shift.</p>
+<div class="box eq"><b>Expected Fringe Shift</b><div class="eqf">&Delta;n = 2Lv&sup2; / c&sup2;&lambda;</div><div class="eqs">L = arm length (~11 m); v = Earth's aether velocity (~30 km/s); &lambda; = wavelength of light. Expected &Delta;n &asymp; 0.4 fringes. Detectable limit: 0.01 fringes. The experiment was 40&times; more sensitive than needed. Observed: consistent with zero.</div></div>
+<h3>The Null Result and Its Aftermath</h3>
+<p>The observed fringe shift was zero. They rotated the apparatus through 360 degrees, repeated at different times of day, different seasons. Nothing. The aether wind apparently did not exist, or left no trace in the speed of light. The result was not immediately celebrated — it was treated as an experimental puzzle. The physics community spent eighteen years constructing explanations. FitzGerald proposed that matter physically contracts in the direction of aether motion, cancelling the expected shift. Lorentz independently derived the same idea with explicit formulae. Both were mathematically correct and physically backwards: they had the right equations, the wrong story.</p>
+<div class="box ex"><b>FitzGerald-Lorentz Contraction</b><p>FitzGerald (1889) proposed that the interferometer arm pointing into the aether wind physically shrank by factor &radic;(1&minus;v&sup2;/c&sup2;), exactly cancelling the expected phase shift. Lorentz derived this formally from electromagnetic theory. This ad hoc hypothesis kept the aether alive for another decade. Einstein would derive the same contraction as a kinematic consequence of constant c — no aether, no material compression, pure geometry.</p></div>
+<div class="box note"><b>Misconception</b><p>Michelson-Morley did not immediately "disprove the aether." It made the aether hypothesis increasingly baroque — requiring special pleading with each new test. Einstein simply abandoned it as unnecessary scaffolding, and the experimental record has vindicated that choice completely.</p></div>
+<div class="box ref"><b>Reference</b><p>Michelson, A.A. &amp; Morley, E.W. (1887). On the relative motion of the Earth and the luminiferous ether. <em>American Journal of Science</em>, 34(203), 333–345.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>Michelson-Morley was 40× more sensitive than necessary to detect the expected aether wind — and found nothing within measurement error.</li><li>The FitzGerald-Lorentz contraction saved the aether hypothesis temporarily, with correct mathematics but backwards physical interpretation.</li><li>Einstein derived the same contraction as a pure kinematic consequence of constant c — no medium needed, no material compression.</li></ul></div>`,
+  "1.4": `<p class="intro">The equations that Einstein would make famous were, technically, written by Lorentz and Poincaré before him. What distinguished Einstein was not the mathematics — it was the willingness to accept what the mathematics was actually saying about physical reality.</p>
+<h3>Lorentz's Transformations</h3>
+<p>Hendrik Lorentz, working within the aether framework, derived the correct transformation equations between frames by 1904. His goal was explaining the Michelson-Morley null result: moving bodies contract, moving clocks slow down — just enough to hide the aether wind. For Lorentz, these were real physical effects caused by interaction with the aether — a conspiracy of nature. The transformations were a mathematical device, not a statement about the deep structure of space and time.</p>
+<div class="box eq"><b>Lorentz Transformation (1904)</b><div class="eqf">x&prime; = &gamma;(x&minus;vt) &nbsp;&nbsp; t&prime; = &gamma;(t&minus;vx/c&sup2;)</div><div class="eqs">&gamma; = 1/&radic;(1&minus;v&sup2;/c&sup2;) is the Lorentz factor. These are the correct equations of special relativity — derived by Lorentz for physically incorrect reasons.</div></div>
+<h3>Poincaré's Insight — and Its Limit</h3>
+<p>Henri Poincaré went further. By 1905 he had recognised that the Lorentz transformations form a mathematical group — the set of all transformations leaving Maxwell's equations invariant. He coined the term "Lorentz group." He understood that the relativity principle should extend to electromagnetism. He derived the relativistic velocity addition formula. He noted c was an upper velocity limit. In almost every technical sense, he was at the threshold of special relativity. Yet he stopped short. Poincaré retained the aether as a conceptual anchor and treated the relativity principle as an empirical convenience — a fortunate conspiracy — rather than a fundamental fact about the universe.</p>
+<div class="box ex"><b>What Einstein Did Differently</b><p>Einstein, by his own account, had been sitting with a question since age 16: what would a light beam look like if you rode alongside it at c? Maxwell's equations have no static-wave solutions — the question has no answer in classical physics. Einstein accepted this as a brute fact of nature and rebuilt physics around it, rather than explaining it away with ad hoc mechanisms. This is the move Lorentz and Poincaré were unwilling to make.</p></div>
+<div class="box note"><b>Priority Disputes</b><p>The historical debate about who "deserves credit" for special relativity is real but ultimately misses the point. Einstein's contribution was not mathematical priority but physical interpretation — he was the first to treat the Lorentz transformation not as a convenient correction factor but as the truth about what space and time actually are.</p></div>
+<div class="box ref"><b>Reference</b><p>Lorentz, H.A. (1904). Electromagnetic phenomena in a system moving with any velocity less than that of light. <em>Proceedings of the Academy of Sciences of Amsterdam</em>, 6, 809–831.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>Lorentz derived the correct transformation equations but interpreted them as physical effects of aether interaction — not as geometry of spacetime.</li><li>Poincaré understood the group structure and came to the mathematical threshold of SR, but retained the aether as a crutch.</li><li>Einstein's contribution was physical interpretation: accepting constant c as a postulate and deriving everything, including the Lorentz transformation, as logical consequences.</li></ul></div>`,
+  "2.1": `<p class="intro">In June 1905, Einstein published "On the Electrodynamics of Moving Bodies" — a paper that opens not with equations but with a philosophical observation about asymmetry, and from two plain postulates reconstructs the foundations of space and time.</p>
+<h3>The Two Postulates</h3>
+<p><strong>Postulate 1 — The Principle of Relativity:</strong> The laws of physics — not just mechanics but <em>all</em> physical laws including Maxwell's — are the same in every inertial reference frame. No experiment, mechanical or electromagnetic, can detect absolute uniform motion.</p>
+<p><strong>Postulate 2 — The Constancy of Light:</strong> The speed of light in a vacuum is c = 299,792,458 m/s for every inertial observer, regardless of the motion of the source or the observer.</p>
+<div class="box key"><b>Key Concept</b><p>These postulates are individually innocent-sounding. Their combination is explosive. Postulate 1 says all inertial frames are equivalent. Postulate 2 says all inertial observers measure light at the same speed. The only way to reconcile them is to allow time itself to differ between observers. Absolute simultaneity must go.</p></div>
+<h3>Why Absolute Time Must Be Abandoned</h3>
+<p>Two observers — one at rest, one in a fast rocket — both measure the same light pulse. Both get c. The light covers distance in time: c = d/t. But the moving observer measures a different distance (due to their motion). Since c is fixed and d differs, t must differ. If c = distance/time is the same for all, and observers disagree on distance, they must disagree on time. There is no escape from this once Postulate 2 is accepted.</p>
+<div class="box ex"><b>The Asymmetry That Opened the Paper</b><p>Einstein's opening paragraph notes that when a magnet moves relative to a conductor, the observable effect — an induced current — is the same whether you say the magnet moves or the conductor moves. But classical electromagnetism gave different mechanistic explanations for each case. This asymmetry between descriptions of the same physical event was his first signal that something was wrong at a foundational level.</p></div>
+<div class="box ref"><b>Reference</b><p>Einstein, A. (1905). Zur Elektrodynamik bewegter Körper. <em>Annalen der Physik</em>, 322(10), 891–921. English translation: Perrett &amp; Jeffery (1923). <em>The Principle of Relativity</em>. Methuen.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>Two postulates: laws of physics identical in all inertial frames; speed of light is c for all inertial observers regardless of source motion.</li><li>The combination forces abandonment of absolute time: fixed c with differing distances requires differing times.</li><li>Einstein's entry point was not the Michelson-Morley experiment but a conceptual asymmetry in classical electrodynamics — same physical event, two different explanations.</li></ul></div>`,
+  "2.2": `<p class="intro">The most radical consequence of Einstein's postulates is the most underappreciated: there is no universal "now." Two events simultaneous for one observer happen at different times for another — and both are equally correct. Simultaneity is not a fact about the world; it is a fact about a frame.</p>
+<h3>The Train-and-Lightning Thought Experiment</h3>
+<p>A train moves at high speed through a station. Lightning strikes both ends of the train simultaneously — as judged by a platform observer equidistant from both strikes. Light from both reaches the platform observer simultaneously. Now consider the train passenger seated at the train's exact centre. The train moves toward one strike point and away from the other. Light from the front strike reaches the passenger before light from the rear strike. The passenger concludes: the front strike happened first. Who is right? <em>Both.</em> This is not a measurement error.</p>
+<div class="box eq"><b>Quantifying the Disagreement</b><div class="eqf">&Delta;t&prime; = &gamma; (&Delta;t &minus; v&Delta;x/c&sup2;)</div><div class="eqs">Two simultaneous events (&Delta;t = 0) separated by distance &Delta;x in one frame are separated in time by &gamma;v&Delta;x/c&sup2; in a frame moving at v. Spatially separated simultaneous events are not simultaneous in a moving frame. The disagreement grows with both v and &Delta;x.</div></div>
+<h3>Simultaneity Is Not Subjective — It Is Frame-Dependent</h3>
+<p>A common misreading: "true" simultaneity is hidden and both observers merely perceive it differently. This is wrong. There is no privileged frame revealing the true time ordering of spacelike-separated events. The train passenger and platform observer give equally physically valid descriptions. The concept of simultaneous events has no frame-independent meaning when events are spatially separated.</p>
+<div class="box ex"><b>The Connection to Invariants</b><p>We discussed previously how relativity is fundamentally a theory of invariants. The relativity of simultaneity is the clearest demonstration: time interval between two events is not invariant. Neither is their spatial separation. What <em>is</em> invariant is the spacetime interval — which combines them in the specific way that all observers agree on. The non-invariance of time and space separately is the price paid for the invariance of their combination.</p></div>
+<div class="box ref"><b>Reference</b><p>Einstein, A. (1917). <em>Über die spezielle und die allgemeine Relativitätstheorie</em>. Vieweg, Braunschweig. English: <em>Relativity: The Special and General Theory</em>, transl. Lawson (1920). The Chapter IX discussion of the train thought experiment is Einstein's own most accessible presentation.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>Simultaneity is frame-dependent: spatially separated events simultaneous in one frame are not simultaneous in another — by a calculable amount &gamma;v&Delta;x/c².</li><li>Neither frame is privileged: both the platform and train observer give physically valid descriptions.</li><li>The individual time interval is not invariant; the spacetime interval combining time and spatial separation is — and that invariance is the deep structure.</li></ul></div>`,
+  "2.3": `<p class="intro">Time dilation is not a clock malfunction or a biological illusion. It is a structural feature of spacetime that can be derived from first principles using only a light source, a ruler, and Pythagoras' theorem.</p>
+<h3>The Light Clock Derivation</h3>
+<p>A clock ticks by bouncing a photon between two mirrors separated by height h. One tick = one round trip. At rest: photon travels 2h, time per tick = 2h/c = T₀ (proper tick time). Now observe this clock moving horizontally at speed v. The photon still bounces between the mirrors — but traces a diagonal path. In coordinate time T (one tick as seen from outside), the clock moves distance vT horizontally. The photon travels cT diagonally while the vertical component is still 2h = cT₀.</p>
+<div class="box eq"><b>Lorentz Factor — from Pythagoras</b><div class="eqf">&gamma; = 1 / &radic;(1 &minus; v&sup2;/c&sup2;)</div><div class="eqs">By Pythagoras: (cT/2)&sup2; = (vT/2)&sup2; + (cT&sub;0;/2)&sup2;. Solving: T = &gamma;T&sub;0;. The moving clock runs slow by exactly &gamma;. At v=0.87c: &gamma;=2. At v=0.99c: &gamma;&asymp;7. Derived using only constant c and Euclidean geometry within any given frame.</div></div>
+<h3>Physical Interpretation</h3>
+<p>γ is always ≥ 1. It equals 1 at rest (no dilation), increases without bound as v→c. The derivation assumes nothing beyond Postulate 2 and Euclidean geometry in any given frame. It is not an approximation — it is exact. The effect is symmetric: each observer sees the other's clock as running slow. This does not create a paradox because comparing clocks requires bringing them together, which requires one of them to accelerate — breaking the symmetry. The twin paradox in Module 3 resolves this exactly.</p>
+<div class="box ex"><b>Experimental Confirmation: Muon Decay</b><p>Cosmic rays create muons at ~15 km altitude. Muons decay with half-life 2.2 μs at rest — they should travel only ~660 m before half decay, never reaching sea level. Yet ground detectors observe them abundantly. At v ≈ 0.998c, γ ≈ 16: their effective half-life from Earth's frame is ~35 μs, giving a range of ~10 km. Time dilation is measured continuously in the cosmic ray flux — not a theoretical novelty but a daily physical reality.</p></div>
+<div class="box note"><b>Misconception</b><p>"From the muon's frame, it still decays in 2.2 μs — so it shouldn't reach sea level." In the muon's frame it does decay in 2.2 μs. But in its frame, the atmosphere is length-contracted to ~1 km, and it reaches sea level in under 2.2 μs. Both frames agree on the outcome: the muon arrives. They disagree on the explanation. This consistency is the invariant spacetime interval at work.</p></div>
+<div class="box ref"><b>Reference</b><p>Rossi, B. &amp; Hall, D.B. (1941). Variation of the rate of decay of mesotrons with momentum. <em>Physical Review</em>, 59(3), 223–228. First quantitative measurement of relativistic time dilation via muon decay.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>γ = 1/√(1−v²/c²) follows from Pythagoras alone given constant c — derived without any additional assumptions.</li><li>Moving clocks run slow by factor γ — a real physical effect confirmed by muon decay, atomic clocks, and particle accelerators.</li><li>The effect is symmetric between frames; apparent asymmetry in comparing clocks requires acceleration, which breaks symmetry — resolved fully in the twin paradox discussion.</li></ul></div>`,
+  "2.4": `<p class="intro">If moving clocks run slow, do moving rulers also shrink? Yes — and the contraction is not a physical squeezing but a kinematic consequence of how space and time relate between frames, with a famous paradox that makes the mechanism transparent.</p>
+<h3>Length Contraction from Time Dilation</h3>
+<p>Measuring the length of a moving rod requires noting the positions of both ends <em>simultaneously</em> and subtracting. The problem: simultaneity is frame-dependent. An observer moving with the rod and an observer watching it pass use different simultaneity conventions — and this difference is precisely the mechanism of contraction. The moving rod appears shortened to L = L₀/γ in its direction of motion, where L₀ is its rest length (proper length). Perpendicular dimensions are unaffected.</p>
+<div class="box eq"><b>Length Contraction</b><div class="eqf">L = L&sub;0; / &gamma;</div><div class="eqs">L&sub;0; = proper length (measured in the rod's rest frame). &gamma; = Lorentz factor. At v=0.87c: &gamma;=2, a 10 m rod appears 5 m. Contraction occurs only in the direction of relative motion; transverse dimensions are unchanged.</div></div>
+<h3>The Ladder Paradox — Resolved</h3>
+<p>A ladder of rest length 10 m runs at high speed into a barn of rest length 8 m. In the barn frame, the ladder is contracted (say, to 6 m) — it fits entirely inside and both barn doors can briefly close simultaneously. In the ladder frame, the barn is contracted — the ladder is far longer than the barn and cannot fit. Both seem to be correct. The resolution: the two barn-door closings that are <em>simultaneous</em> in the barn frame are <strong>not simultaneous</strong> in the ladder frame. In the ladder frame, the exit door opens before the entrance closes. At no moment in the ladder frame are both doors closed simultaneously. No paradox — only a difference in simultaneity conventions.</p>
+<div class="box ex"><b>Contraction Is Kinematic, Not Material</b><p>The rod is not physically squeezed by a force. No material stresses act on it. Its atoms are not closer together in its own frame. The contraction is purely a consequence of the spacetime geometry relating two frames. The rod's internal physics is perfectly normal in its own rest frame — it is only in the moving frame that its coordinate extent is compressed.</p></div>
+<div class="box note"><b>Misconception</b><p>A photograph of a moving object does not show a simple Lorentz-contracted image. Photos capture light arriving at a single moment, but that light was emitted at different times from different parts of the object. The visual result is Penrose-Terrell rotation — a rotation effect, not simple compression. Contraction affects coordinate measurements, not visual appearance.</p></div>
+<div class="box ref"><b>Reference</b><p>Terrell, J. (1959). Invisibility of the Lorentz contraction. <em>Physical Review</em>, 116(4), 1041–1045. Shows the visual appearance differs from the coordinate length contraction.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>Length contraction L = L₀/γ is a consequence of frame-dependent simultaneity in measuring endpoints — not a physical compression.</li><li>The ladder paradox is resolved by the relativity of simultaneity: the two door-closing events have opposite time orderings in different frames.</li><li>Contraction is purely kinematic: the rod is undisturbed in its own rest frame; only coordinate measurements in the moving frame show it compressed.</li></ul></div>`,
+  "2.5": `<p class="intro">The Lorentz transformations are the complete, exact replacement for Galilean transformations. From them follows the most counterintuitive result in kinematics: combining two sub-light velocities never produces a result at or above c.</p>
+<h3>The Transformation Equations</h3>
+<p>For frames S and S&prime; where S&prime; moves at speed v along the x-axis:</p>
+<div class="box eq"><b>Lorentz Transformation</b><div class="eqf">x&prime; = &gamma;(x&minus;vt) &nbsp;&nbsp; t&prime; = &gamma;(t&minus;vx/c&sup2;)</div><div class="eqs">y&prime;=y, z&prime;=z. Note the crucial second term in t&prime;: time in the new frame depends on both t <em>and x</em> in the original. This is the mathematical signature of relativity of simultaneity — spatially separated simultaneous events are not simultaneous in the primed frame.</div></div>
+<h3>Velocity Addition</h3>
+<p>Classically: rocket at 0.8c fires missile at 0.6c relative to the rocket → missile at 1.4c relative to Earth. Violates Postulate 2. The relativistic formula, derived directly from the Lorentz transformation:</p>
+<div class="box eq"><b>Relativistic Velocity Addition</b><div class="eqf">u = (u&prime; + v) / (1 + u&prime;v/c&sup2;)</div><div class="eqs">u&prime; = object speed in S&prime;; v = speed of S&prime; relative to S. For the example: u = 1.4c/1.48 &asymp; 0.946c. Always below c for any finite sub-light inputs. Plugging u&prime; = c gives u = c exactly — light speed is invariant, confirming Postulate 2.</div></div>
+<h3>Recovering Galilean Physics</h3>
+<p>When v and u&prime; are both small compared to c, the denominator (1 + u&prime;v/c²) ≈ 1, and u ≈ u&prime; + v — the familiar Galilean formula. Special relativity does not contradict Newtonian mechanics; it shows Newtonian mechanics is the low-velocity limit of a deeper theory. The Lorentz transformation reduces to the Galilean transformation in this limit. All confirmed Newtonian predictions survive.</p>
+<div class="box note"><b>Misconception</b><p>"The velocity addition formula is an approximation." It is exact within special relativity. The Galilean formula is the approximation — valid when v, u&prime; &lt;&lt; c. The relativistic formula has been tested in particle accelerator beam dynamics and in measuring velocities of high-energy cosmic ray particles.</p></div>
+<div class="box ref"><b>Reference</b><p>Taylor, E.F. &amp; Wheeler, J.A. (1992). <em>Spacetime Physics</em> (2nd ed.). W.H. Freeman. Chapter 1 derives the Lorentz transformation from the two postulates with careful attention to the physical meaning of each step.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>The Lorentz transformation encodes all relativistic kinematics; the time transformation t&prime; = γ(t−vx/c²) is the mathematical heart of relativity of simultaneity.</li><li>Relativistic velocity addition always gives results below c for sub-light inputs; substituting c returns c exactly — confirming self-consistency.</li><li>Galilean mechanics is recovered in the limit v, u&prime; << c: SR subsumes Newton rather than contradicting him.</li></ul></div>`,
+  "3.1": `<p class="intro">Three years after Einstein published special relativity, his former mathematics professor Hermann Minkowski declared that space and time separately were "doomed to fade into mere shadows." His reformulation was not cosmetic — it revealed the geometric structure Einstein had found by physical reasoning.</p>
+<h3>The Four-Dimensional Manifold</h3>
+<p>Minkowski's insight: special relativity is most naturally geometry in four dimensions. An <strong>event</strong> is a point fully specified by (ct, x, y, z). The factor c in the time coordinate gives it dimensions of length, making all four coordinates commensurate. The geometry is <strong>pseudo-Riemannian</strong> — like Euclidean geometry but with a crucial sign difference in the metric:</p>
+<div class="box eq"><b>Minkowski Metric</b><div class="eqf">ds&sup2; = &minus;c&sup2;dt&sup2; + dx&sup2; + dy&sup2; + dz&sup2;</div><div class="eqs">The minus sign on the time component is not a notational choice — it encodes the fundamental difference between space and time. This signature (&minus;+++) is what gives spacetime its causal structure and prevents time from being just another spatial direction you can freely rotate into.</div></div>
+<h3>Why the Minus Sign Matters</h3>
+<p>In Euclidean geometry, all distances are positive. In Minkowski geometry, the interval ds² can be negative, zero, or positive — and each case has a distinct physical meaning (timelike, null, spacelike — covered in the next lesson). The minus sign is what enforces causality: it prevents free "rotation" between time and space. If all signs were positive, the distinction between past and future would dissolve. The asymmetry of time — that you can move freely in space but only forward in time — is encoded in this sign.</p>
+<div class="box ex"><b>Minkowski's Words (1908)</b><p>"Henceforth space by itself, and time by itself, are doomed to fade away into mere shadows, and only a kind of union of the two will preserve an independent reality." — Hermann Minkowski, Cologne lecture, 1908. Einstein initially dismissed this as "superfluous learnedness." He later acknowledged it was essential for general relativity, which required the full machinery of curved pseudo-Riemannian geometry.</p></div>
+<div class="box note"><b>Misconception</b><p>Minkowski spacetime is <em>flat</em> — it is the special-relativistic geometry where gravity is absent. Curvature is added by general relativity. Minkowski is to GR what flat Euclidean space is to Riemannian geometry: the local approximation valid where gravity is negligible.</p></div>
+<div class="box ref"><b>Reference</b><p>Minkowski, H. (1908). Raum und Zeit. Address to the 80th Assembly of German Natural Scientists and Physicians, Cologne. Published in <em>Physikalische Zeitschrift</em>, 10 (1909), 75–88.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>Minkowski reformulated SR as geometry in a four-dimensional pseudo-Riemannian manifold with metric ds² = −c²dt² + dx² + dy² + dz².</li><li>The minus sign on the time component is physically essential — it distinguishes time from space and enforces the causal structure.</li><li>Minkowski spacetime is flat; curvature is GR's addition. This geometric language proved indispensable for the extension to general relativity.</li></ul></div>`,
+  "3.2": `<p class="intro">We established in conversation that relativity is not a theory of what changes between observers — it is a theory of what does not. The spacetime interval is the mathematical heart of that claim: the quantity that every observer, regardless of velocity, must agree on.</p>
+<h3>The Spacetime Interval</h3>
+<p>Different observers disagree on the time between two events. They disagree on the spatial distance. But one specific combination is the same for all:</p>
+<div class="box eq"><b>The Spacetime Interval</b><div class="eqf">s&sup2; = c&sup2;&Delta;t&sup2; &minus; &Delta;x&sup2; &minus; &Delta;y&sup2; &minus; &Delta;z&sup2;</div><div class="eqs">s&sup2; is Lorentz-invariant. Compute it in any inertial frame and get the same number. &Delta;t and &Delta;x individually change between frames; their combination does not. Directly analogous to Euclidean distance r&sup2;=x&sup2;+y&sup2; invariant under rotation even as x and y change.</div></div>
+<h3>Three Types of Interval</h3>
+<p><strong>Timelike (s² &gt; 0):</strong> Time separation dominates. A single observer can be present at both events. A frame exists where both events happen at the same place. The square root √s² is the <strong>proper time</strong> — time on a clock travelling between them.</p>
+<p><strong>Spacelike (s² &lt; 0):</strong> Spatial separation dominates. No observer can attend both events. A frame exists where both happen simultaneously. These events cannot causally influence each other.</p>
+<p><strong>Null (s² = 0):</strong> Connected by a light ray. Only a massless particle can travel between them. The boundary between timelike and spacelike.</p>
+<div class="box key"><b>Proper Time Is the Physical Clock</b><p>Proper time τ — time measured by a clock that travels the worldline — is the spacetime arc-length of the path. It is invariant: all observers agree on how much any given clock aged along its worldline. Coordinate time t is frame-dependent; proper time is not. This is why proper time appears in the fundamental equations of relativistic mechanics, not coordinate time. When we discussed Einstein's quote about time being "a stubbornly persistent illusion," this is what he meant: coordinate time is an artefact; proper time is real.</p></div>
+<div class="box ex"><b>The Rotation Analogy — and Its Limit</b><p>A Lorentz boost (changing velocity frames) is like a rotation in spacetime: x and t components change but s² is preserved, just as rotation changes x and y but preserves r². However, the boost is hyperbolic, not circular — the parameter is rapidity &phi;=tanh&minus;&sup1;(v/c), not angle &theta;. This hyperbolic structure is the mathematical reason time dilation grows without bound as v&rarr;c, whereas circular rotation is bounded by 2&pi;.</p></div>
+<div class="box ref"><b>Reference</b><p>Misner, C.W., Thorne, K.S. &amp; Wheeler, J.A. (1973). <em>Gravitation</em>. W.H. Freeman, §1.5–1.6. The canonical graduate treatment of the spacetime interval and proper time.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>The spacetime interval s² = c²Δt² − Δx² − Δy² − Δz² is invariant under all Lorentz transformations — the invariant we discussed as the deep structure of relativity.</li><li>Three interval types: timelike (causal connection possible, proper time defined), spacelike (no causal connection), null (light-connected boundary).</li><li>Proper time is the physically fundamental clock — frame-independent, it measures actual elapsed time along a worldline.</li></ul></div>`,
+  "3.3": `<p class="intro">A Minkowski diagram is a map of spacetime. Once you can read one, time dilation, length contraction, and the relativity of simultaneity become geometrically visible rather than requiring algebraic derivation.</p>
+<h3>The Basic Setup</h3>
+<p>Plot ct vertically, x horizontally. An event is a point. A <strong>worldline</strong> is the path an object traces through spacetime — its complete history. An object at rest traces a vertical line. A constant-velocity object traces a diagonal line. A light ray always travels at 45° (since Δx = cΔt, slope ct/x = 1).</p>
+<div class="box key"><b>The Light Cone</b><p>From any event, light expands in all directions, tracing a cone in 3+1 dimensions (two lines at ±45° in the 1+1 diagram). Events inside the future light cone can be causally influenced by the central event. Events inside the past light cone could have influenced it. Events outside — the spacelike region — are causally disconnected. The light cone structure is the same for all observers: it is the one invariant geometric feature of every event.</p></div>
+<h3>How Frames Look on the Diagram</h3>
+<p>When you boost to a frame moving at velocity v, both the ct&prime; and x&prime; axes rotate <em>toward</em> the 45° light line — by equal angles. As v increases, both axes close in on the light worldline. At v = c, they would merge with it — which is why c is unreachable: the axis tilt reaches the boundary but never crosses it. The light cone itself never moves. This is another way of seeing the invariance of the null interval.</p>
+<div class="box eq"><b>Axis Tilt Under a Boost</b><div class="eqf">tan(&theta;) = v/c</div><div class="eqs">Both ct&prime; and x&prime; axes tilt by angle &theta; toward the light cone — one from each side. Equal tilting preserves the spacetime interval. Simultaneity surfaces (horizontal lines in the unprimed frame) become tilted lines in the primed frame, making relativity of simultaneity geometrically transparent.</div></div>
+<div class="box ex"><b>Proper Time vs. Diagram Length</b><p>The diagram looks Euclidean, but the geometry is not. Proper time is not proportional to the Euclidean length of a worldline on the diagram. Due to the minus sign in the metric, the more a worldline tilts from vertical (the faster the object moves spatially), the <em>less</em> proper time it accumulates. This is how the twin paradox reads geometrically: the tilted, bent worldline (the traveller) accumulates less proper time than the straight vertical line (Earth). Longer in diagram, shorter in proper time.</p></div>
+<div class="box ref"><b>Reference</b><p>Schutz, B. (2009). <em>A First Course in General Relativity</em> (2nd ed.). Cambridge University Press, Chapter 1. Clear treatment of Minkowski diagrams with attention to the distinction between diagram length and proper time.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>Minkowski diagram: vertical worldline = at rest; 45° lines = light; the light cone defines causal structure identically for all observers.</li><li>A Lorentz boost tilts both ct and x axes equally toward the 45° line — geometrically showing why c is unreachable and why simultaneity is frame-dependent.</li><li>Proper time is not Euclidean diagram length: faster spatial motion means less proper time — the geometric basis of the twin paradox.</li></ul></div>`,
+  "3.4": `<p class="intro">We touched on the twin paradox earlier. Here is the complete geometric resolution — not just "acceleration breaks the symmetry" but a precise statement about worldline geometry that makes the result inevitable.</p>
+<h3>Setup and the Apparent Paradox</h3>
+<p>Alpha stays on Earth. Beta travels to a distant star at high velocity and returns. At reunion, Beta is younger. The apparent paradox: can't Beta claim to be at rest, with Alpha doing the travelling? If so, shouldn't Alpha be younger? The answer is no — and the reason is geometric, not merely definitional.</p>
+<h3>The Geometric Resolution</h3>
+<p>In Minkowski spacetime, the proper time along a worldline is the spacetime arc-length of that path. In flat spacetime, the straight worldline between two events has the <em>maximum</em> proper time — the inverse of Euclidean intuition, where straight is shortest. Any detour reduces proper time. This is the <strong>twin effect</strong>: straight worldlines age maximally; bent worldlines age less.</p>
+<div class="box eq"><b>Proper Time Along a Path</b><div class="eqf">&tau; = &int; &radic;(1 &minus; v(t)&sup2;/c&sup2;) dt</div><div class="eqs">Proper time is the integral of 1/&gamma; along the worldline. A straight path (constant v=0, inertial) gives &tau; = t (maximum). Any bent path reduces &tau;. Beta's V-shaped worldline is genuinely shorter in proper time than Alpha's straight worldline.</div></div>
+<h3>Why the Symmetry Fails</h3>
+<p>Beta must accelerate — must change direction. This is not a frame relabelling: acceleration is an absolute, invariant fact. Beta feels a force at the turnaround; Alpha does not. An accelerometer on Beta reads non-zero during the turnaround; one on Alpha reads zero throughout. The two worldlines are geometrically different: one is straight (a geodesic), one is bent (not a geodesic). Straight worldlines in Minkowski spacetime are inertial. Bent ones are not. This asymmetry is the resolution.</p>
+<div class="box ex"><b>At 99% of c to a Star 25 Light-Years Away</b><p>&gamma; &asymp; 7.09. Coordinate time for round trip: ~50.5 years (Alpha ages). Proper time on Beta's worldline: 50.5/7.09 &asymp; 7.1 years. Reunion: Alpha is 50.5 years older; Beta is 7.1 years older. This is not a paradox — it is the invariant spacetime geometry of two different worldlines connecting the same two events.</p></div>
+<div class="box note"><b>Misconception</b><p>"The age difference is accumulated during the acceleration." Not so. Even an instantaneous turnaround (infinite acceleration over zero time) gives the same age difference. The difference accumulates along the entire journey — it is a statement about total worldline length, not about the turnaround moment.</p></div>
+<div class="box ref"><b>Reference</b><p>Hafele, J.C. &amp; Keating, R.E. (1972). Around-the-world atomic clocks. <em>Science</em>, 177(4044), 166–168. Direct experimental measurement of differential aging using atomic clocks on aircraft and on the ground.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>In Minkowski geometry, the straight (inertial) worldline between two events accumulates maximum proper time — the inverse of Euclidean shortest-path intuition.</li><li>Beta's worldline is geometrically bent (non-geodesic); Alpha's is straight (geodesic). The geometry, not just the acceleration label, explains the age difference.</li><li>The age difference accumulates along the whole journey, not at the turnaround — it is a global statement about worldline length.</li></ul></div>`,
+  "3.5": `<p class="intro">The light cone is not just a diagram feature — it is the absolute structure of spacetime. Unlike reference frames, unlike simultaneity, the light cone at any event is the same for every observer. It is the foundation on which causality rests.</p>
+<h3>The Four Causal Regions</h3>
+<p>From any event P, the forward and backward light cones divide spacetime into:</p>
+<p><strong>Absolute future:</strong> Inside the forward cone. Reachable from P by a signal at or below c. All observers agree these events are in P's future.</p>
+<p><strong>Absolute past:</strong> Inside the backward cone. Could have sent a signal to P. All observers agree these are in P's past.</p>
+<p><strong>Elsewhere:</strong> Outside both cones. No causal connection to P. Different observers may disagree on whether these events happened before, after, or simultaneously with P — and there is no fact of the matter.</p>
+<p><strong>The null surface:</strong> The cones themselves, connected to P by light.</p>
+<div class="box eq"><b>Causal Structure from the Interval</b><div class="eqf">s&sup2; &gt; 0: timelike (causal) &nbsp;&nbsp; s&sup2; &lt; 0: spacelike (acausal) &nbsp;&nbsp; s&sup2; = 0: null</div><div class="eqs">The sign of s&sup2; between two events is Lorentz-invariant. If two events are spacelike separated in one frame, they are spacelike separated in all frames. Causal structure is observer-independent: the most fundamental invariant of the theory.</div></div>
+<h3>Causality Is Preserved — Exactly</h3>
+<p>Special relativity preserves causality completely. If A can cause B (timelike or null separated), all observers agree A happened before B. The only events whose time ordering is ambiguous are spacelike separated — precisely those that cannot causally influence each other. There is no conflict between the relativity of simultaneity and causality: they govern different classes of events.</p>
+<div class="box ex"><b>Tachyons and Causality Violation</b><p>Hypothetical faster-than-light particles (tachyons) would travel along spacelike intervals. A tachyon signal from P to spacelike-separated Q would, in some boosted frame, arrive before it was sent — creating a closed causal loop (sending a message to your own past). This is the precise reason FTL information transfer is physically impossible: not merely difficult, but logically inconsistent with causal structure. The impossibility is in the geometry of spacetime, not in engineering limitations.</p></div>
+<div class="box ref"><b>Reference</b><p>Penrose, R. (2004). <em>The Road to Reality</em>. Jonathan Cape, Chapter 17. Discussion of causal structure and light cones in both SR and GR.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>The light cone partitions spacetime into absolute future, absolute past, and causally disconnected "elsewhere" — identical for all observers, the one truly universal structure.</li><li>Causal time ordering is invariant for timelike events; only spacelike events have observer-dependent ordering, and only they cannot influence each other.</li><li>FTL information transfer would create closed causal loops — logically inconsistent with the geometry, not merely a practical limitation.</li></ul></div>`,
+  "4.1": `<p class="intro">E = mc² is simultaneously the most famous and most misunderstood equation in physics. It does not say mass converts to energy. It says mass and energy are the same thing — two aspects of a single invariant quantity.</p>
+<h3>Einstein's Second 1905 Paper</h3>
+<p>Three months after the relativity paper, Einstein published a three-page follow-up asking: does a body's kinetic energy change when it emits light? Analysing the energy bookkeeping in two frames, he showed that if a body emits radiation of energy E, its inertial mass decreases by E/c². The conclusion: mass and energy are equivalent, related by c².</p>
+<div class="box eq"><b>Energy-Momentum Relation</b><div class="eqf">E&sup2; = (pc)&sup2; + (mc&sup2;)&sup2;</div><div class="eqs">The full relation. At rest (p=0): E=mc&sup2;. For a massless particle (m=0): E=pc. The invariant quantity m&sup2;c&sup4; = E&sup2;&minus;(pc)&sup2; is the Lorentz-invariant rest energy squared — the same in all frames. This is the mass-shell condition.</div></div>
+<h3>Rest Energy and Mass Defect</h3>
+<p>The term mc² is <strong>rest energy</strong> — energy stored in mass alone, independent of motion. One gram of matter contains ~9×10¹³ joules — a large power station's output for several years. In nuclear physics, the <strong>mass defect</strong> is directly measurable: a helium-4 nucleus has less mass than its four constituent nucleons. The missing mass is the binding energy divided by c². This deficit is ~28 MeV per helium-4 nucleus — measured precisely by mass spectrometry.</p>
+<div class="box ex"><b>What E = mc² Does Not Mean</b><p>The equation does not say mass "converts" to energy the way wood converts to ash and heat. When a nucleus fissions, the total energy (rest + kinetic + radiation) is conserved exactly. The rest mass of the products is less than the original, and the difference appears as kinetic energy of fragments and gamma radiation. No mass disappeared — the inventory of energy redistributed between its rest and non-rest forms. Mass is rest energy; they are the same thing measured in different units.</p></div>
+<div class="box ref"><b>Reference</b><p>Einstein, A. (1905). Ist die Trägheit eines Körpers von seinem Energieinhalt abhängig? <em>Annalen der Physik</em>, 323(13), 639–641. The three-page derivation of mass-energy equivalence as a direct consequence of SR.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>The full energy-momentum relation E² = (pc)² + (mc²)² contains E=mc² at rest and E=pc for massless particles as special cases.</li><li>Rest energy mc² is enormous — 9×10¹³ J per gram — and partially accessible in nuclear reactions via mass defect.</li><li>Mass is rest energy: they are the same quantity, not convertible currencies but identical things. The equation is an identity, not a transformation rule.</li></ul></div>`,
+  "4.2": `<p class="intro">Classical momentum p = mv works at everyday speeds. Push it to relativistic velocities and it fails — not slightly, but catastrophically. The correction reveals exactly why no massive object can ever reach the speed of light.</p>
+<h3>Relativistic Momentum</h3>
+<p>Newtonian mechanics predicts that a constant force produces constant acceleration — velocity increases linearly, eventually exceeding c. This cannot be right. The fix: momentum must incorporate the Lorentz factor.</p>
+<div class="box eq"><b>Relativistic Momentum</b><div class="eqf">p = &gamma;mv = mv / &radic;(1&minus;v&sup2;/c&sup2;)</div><div class="eqs">At low speeds, &gamma;&asymp;1 and p&asymp;mv (classical limit). As v&rarr;c, &gamma;&rarr;&infin; and p&rarr;&infin;. Infinite momentum requires infinite energy — never available from a finite source. This is not an engineering limitation: it is structural.</div></div>
+<h3>Why c Is a Hard Limit</h3>
+<p>Total relativistic energy is E = γmc². Accelerating from rest to velocity v requires supplying kinetic energy E − mc² = mc²(γ−1). As v→c, γ→∞, so the required energy diverges. There is no finite energy budget that brings a massive object to c. Adding more energy does not produce more speed — it increases γ, making the particle increasingly resistant to further acceleration.</p>
+<p>This is directly observable at CERN. LHC protons travel at 0.9999999896c with γ ≈ 7,460. Their kinetic energy per proton is ~6.5 TeV — about 7,000 times their rest mass energy. Yet they remain below c by a measurable margin. Each factor-of-ten increase in energy above rest mass requires increasing v by a progressively smaller amount, asymptotically approaching c but never reaching it.</p>
+<div class="box ex"><b>Massless Particles</b><p>Setting m=0 in the full energy-momentum relation gives E=pc — energy and momentum with no rest mass. Such a particle cannot be slowed: it has no rest frame in which it is stationary. It must travel at exactly c. The photon is the canonical example. The dichotomy is absolute: massive particles cannot reach c; massless particles cannot travel at any other speed.</p></div>
+<div class="box ref"><b>Reference</b><p>Evans, L. &amp; Bryant, P. (eds.) (2008). LHC Machine. <em>Journal of Instrumentation</em>, 3, S08001. Documents LHC design parameters including the relativistic beam dynamics requiring full Lorentz-factor treatment throughout.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>Relativistic momentum p=γmv diverges as v→c; accelerating any massive particle to c would require infinite energy.</li><li>The LHC demonstrates this directly: protons at γ≈7,460 have kinetic energies thousands of times their rest mass, yet remain measurably below c.</li><li>Massless particles travel at exactly c and cannot travel at any other speed: the two categories — massive and massless — are fundamentally distinct.</li></ul></div>`,
+  "4.3": `<p class="intro">Four-vectors are the language in which special relativity speaks most naturally. Combining space and time (or energy and momentum) into a single four-component object makes Lorentz transformations straightforward and turns the invariants of physics into automatic consequences.</p>
+<h3>The Spacetime Four-Vector</h3>
+<p>Instead of treating position (x,y,z) and time t separately, combine them: x^μ = (ct, x, y, z) where μ runs from 0 to 3. Under a Lorentz boost, components mix according to the Lorentz transformation — just as spatial vector components mix under rotation. The difference: the "rotation" is hyperbolic (parameter: rapidity φ = tanh⁻¹(v/c)) rather than circular.</p>
+<div class="box eq"><b>Four-Momentum</b><div class="eqf">p&sup;&mu; = (E/c, p&sub;x;, p&sub;y;, p&sub;z;)</div><div class="eqs">Combines energy and three-momentum. Its Lorentz-invariant "length": p&sub;&mu;;p&sup;&mu;; = &minus;(mc)&sup2; — the rest mass squared, identical in all frames. This is the mass-shell condition in four-vector form. Conservation of four-momentum in any frame guarantees energy and momentum conservation simultaneously.</div></div>
+<h3>Lorentz Covariance — the Deep Principle</h3>
+<p>An equation written in terms of four-vectors is automatically valid in all inertial frames. If it holds in one frame, it holds in all. This is <strong>Lorentz covariance</strong> — a structural requirement for any physical law consistent with special relativity. It provides a systematic way to test whether a proposed law is relativistically valid: if it cannot be written in four-vector (or tensor) form, it is not frame-independent. This principle guided the formulation of quantum electrodynamics, the Standard Model, and ultimately general relativity.</p>
+<div class="box ex"><b>Four-Velocity and a Surprising Invariant</b><p>The four-velocity u^μ = dx^μ/d&tau; (derivative with respect to proper time) is a genuine four-vector. Its invariant length: u_μu^μ = −c². Every particle's four-velocity has the same invariant magnitude, regardless of its speed. The direction of u^μ in spacetime encodes the particle's motion; its invariant magnitude is always c. This means all massive particles "travel through spacetime" at speed c — just in different directions, with more or less of that speed directed through time vs. through space.</p></div>
+<div class="box ref"><b>Reference</b><p>Jackson, J.D. (1999). <em>Classical Electrodynamics</em> (3rd ed.). Wiley, Chapter 11. Standard graduate treatment showing how Maxwell's equations are naturally Lorentz covariant — the original motivation for the four-vector framework.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>Four-vectors unify position with time and momentum with energy; their invariant lengths are the frame-independent physical quantities.</li><li>Four-momentum's invariant length is −(mc)²: rest mass is Lorentz-invariant, the same in every reference frame.</li><li>All massive particles have four-velocity with magnitude c — they all "travel through spacetime" at c, with different allocations between the spatial and temporal directions.</li></ul></div>`,
+  "5.1": `<p class="intro">Special relativity handles inertial frames. General relativity is born from a single profound question: what happens when the frame accelerates? Einstein's answer began with what he called the happiest thought of his life.</p>
+<h3>Einstein's Happiest Thought (1907)</h3>
+<p>A man falling freely from a rooftop would not feel his own weight. Within his local reference frame, gravity has vanished. There is nothing locally to distinguish free fall from floating in empty space. This became the <strong>Equivalence Principle</strong>: the local effects of a gravitational field are indistinguishable from the effects of acceleration.</p>
+<div class="box eq"><b>Gravitational = Inertial Mass</b><div class="eqf">m&sub;g; = m&sub;i;</div><div class="eqs">Gravitational mass (strength of gravitational interaction) equals inertial mass (resistance to acceleration). Newton noted this numerically but had no explanation for it. The equivalence principle makes it a fundamental consequence, not a numerical coincidence. Tested to 1 part in 10&sup1;&sup5; by the MICROSCOPE satellite (2017).</div></div>
+<h3>Immediate Physical Consequences</h3>
+<p>The equivalence principle forces two predictions before the full field equations exist:</p>
+<p><strong>Gravity bends light.</strong> In an accelerating rocket, a horizontal light beam curves toward the floor. Since gravity and acceleration are locally equivalent, gravity must bend light. Einstein predicted this in 1907; confirmed in 1919.</p>
+<p><strong>Gravity slows clocks.</strong> In an accelerating rocket, ceiling clocks tick faster than floor clocks (a Doppler-like effect from the acceleration). Therefore, clocks run slower in stronger gravitational fields. Confirmed by Pound and Rebka in 1959.</p>
+<div class="box ex"><b>The Sealed Elevator</b><p>In a freely falling elevator: drop a ball — it floats beside you. Shine light — it travels straight. Physics inside is locally indistinguishable from deep space. You are on a geodesic — following the natural path through curved spacetime. What you feel as gravity standing on the ground is not gravity pulling you down: it is the ground pushing you upward, accelerating you away from your natural free-fall path. This reframing — standing as acceleration, free fall as inertia — is Einstein's most counterintuitive insight.</p></div>
+<div class="box ref"><b>Reference</b><p>Touboul, P. et al. (MICROSCOPE Collaboration, 2017). MICROSCOPE Mission: First results of a space test of the equivalence principle. <em>Physical Review Letters</em>, 119(23), 231101.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>Equivalence principle: gravity and acceleration are locally indistinguishable in any sealed experiment — the founding insight of general relativity.</li><li>Gravitational and inertial mass are equal to 1 part in 10¹⁵; the equivalence principle explains this as a fundamental physical fact rather than a numerical accident.</li><li>Two immediate consequences: gravity bends light and slows clocks — both derivable from equivalence alone, before the full field equations are needed.</li></ul></div>`,
+  "5.2": `<p class="intro">General relativity is geometry — but a more general geometry than Euclid's or Minkowski's. To describe spacetime curved by gravity, Einstein needed Riemann's mathematics of curved manifolds: tools for describing surfaces that cannot be flattened without distortion.</p>
+<h3>The Metric Tensor</h3>
+<p>In Minkowski spacetime (SR), the metric is globally flat: the same formula applies everywhere. In a curved spacetime, the metric tensor g_μν(x) varies from point to point — it is a field encoding how to measure distances and time intervals at each event:</p>
+<div class="box eq"><b>The Metric Tensor</b><div class="eqf">ds&sup2; = g&sub;&mu;&nu;; dx&sup;&mu;; dx&sup;&nu;;</div><div class="eqs">g&sub;&mu;&nu;; is a 4&times;4 symmetric tensor (10 independent components). In flat Minkowski spacetime: g&sub;&mu;&nu;; = diag(&minus;1,+1,+1,+1) everywhere. In curved spacetime, g&sub;&mu;&nu;; varies with position, encoding the gravitational field. The metric IS the gravitational field in GR.</div></div>
+<h3>Intrinsic Curvature</h3>
+<p>There are two types of curvature. <strong>Extrinsic:</strong> curvature seen from a higher-dimensional embedding space. A cylinder has extrinsic curvature from 3D but is intrinsically flat (roll it flat with no distortion). <strong>Intrinsic (Riemannian):</strong> detectable from within the surface without reference to any embedding. A sphere has positive intrinsic curvature — triangles have angles summing to more than 180°, circles have circumferences less than 2πr. Einstein's spacetime curvature is intrinsic in this sense; it requires no higher-dimensional space.</p>
+<div class="box ex"><b>Tidal Forces as Curvature</b><p>The physical signature of spacetime curvature is tidal forces — differences in gravitational pull across an extended body. Two freely falling balls released side by side near a massive body will converge (both falling toward the same centre). Their convergence is intrinsic curvature made visible. In a perfectly uniform gravitational field (not physically realisable), there would be no tidal forces and no intrinsic curvature — just a coordinate acceleration removable by free-fall transformation.</p></div>
+<div class="box ref"><b>Reference</b><p>Carroll, S. (2004). <em>Spacetime and Geometry: An Introduction to General Relativity</em>. Addison-Wesley, Chapter 3. Standard modern treatment of the metric tensor, covariant derivatives, and Riemannian curvature.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>The metric tensor g_μν encodes the geometry of spacetime at each event — it is the gravitational field in GR, varying with position.</li><li>Intrinsic curvature is detectable from within: triangles, circles, and parallel lines all deviate from Euclidean expectations in curved geometry.</li><li>Tidal forces are the physical signature of curvature and cannot be eliminated by going to a free-fall frame — unlike uniform gravitational acceleration.</li></ul></div>`,
+  "5.3": `<p class="intro">In flat spacetime, free particles travel in straight lines. In curved spacetime, "straight" requires a definition: the straightest possible path through a curved geometry. These paths — geodesics — eliminate gravity as a force entirely.</p>
+<h3>Geodesics as Extremal Paths</h3>
+<p>A geodesic extremises the spacetime interval between two events — specifically, it is the path of maximum proper time for timelike paths. This is the curved-spacetime generalisation of a straight line, and of Newton's first law: an object with no forces acting on it follows a geodesic. In GR, free fall is inertial motion. The apple is not pulled by gravity — it is following the straightest path through curved spacetime.</p>
+<div class="box eq"><b>The Geodesic Equation</b><div class="eqf">d&sup2;x&sup;&mu;/d&tau;&sup2; + &Gamma;&sup;&mu;&sub;&nu;&rho;; (dx&sup;&nu;/d&tau;)(dx&sup;&rho;/d&tau;) = 0</div><div class="eqs">The Christoffel symbols &Gamma;&sup;&mu;&sub;&nu;&rho;; are computed from derivatives of the metric — they encode how coordinate basis vectors change, i.e., the curvature correction to straightness. In flat spacetime, all &Gamma;=0 and this reduces to d&sup2;x&sup;&mu;/d&tau;&sup2;=0: constant four-velocity, Newton's first law.</div></div>
+<h3>Why You Feel Gravity on the Ground</h3>
+<p>Standing on Earth, an accelerometer reads 9.8 m/s² upward. You are being accelerated upward, away from your natural geodesic (which would carry you toward Earth's centre). In free fall, an accelerometer reads zero — you are on a geodesic. Gravity in GR is not a force; it is the curvature of the geodesics through which free objects move. What you perceive as gravitational attraction is the deviation from free-fall motion, not the free fall itself.</p>
+<div class="box ex"><b>Planetary Orbits as Geodesics</b><p>Earth's orbit is a geodesic in the curved spacetime around the Sun. The orbit is "straight" — in the sense of maximum proper time — through the Solar System's spacetime geometry. The elliptical shape is not drawn by a force; it is the natural curve of the straightest path in slightly curved Schwarzschild spacetime. Deviations from a perfect Newtonian ellipse — Mercury's precession — arise where the curvature is strongest and the geodesic correction is largest.</p></div>
+<div class="box ref"><b>Reference</b><p>Misner, C.W., Thorne, K.S. &amp; Wheeler, J.A. (1973). <em>Gravitation</em>. W.H. Freeman, Chapter 13. Comprehensive treatment of geodesics, parallel transport, and the geodesic deviation equation.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>Geodesics maximise proper time in curved spacetime — the straightest possible paths, replacing the straight lines of flat spacetime and the Newtonian force law.</li><li>Free fall is inertial motion in GR: freely falling objects follow geodesics and feel no force; standing on the ground, you are accelerating away from your geodesic.</li><li>Planetary orbits are geodesics in curved spacetime; deviations from Newtonian ellipses reveal where the geodesic correction is non-negligible.</li></ul></div>`,
+  "5.4": `<p class="intro">The Einstein field equations are the core of general relativity — ten coupled, nonlinear partial differential equations relating the curvature of spacetime to its matter-energy content. Wheeler's summary: matter tells spacetime how to curve; spacetime tells matter how to move.</p>
+<h3>The Structure</h3>
+<p>The field equations equate two geometric tensors — both 4×4 symmetric (10 independent components each):</p>
+<div class="box eq"><b>Einstein Field Equations</b><div class="eqf">G&sub;&mu;&nu;; + &Lambda;g&sub;&mu;&nu;; = (8&pi;G/c&sup4;) T&sub;&mu;&nu;;</div><div class="eqs">G&sub;&mu;&nu;; = Einstein tensor (encodes spacetime curvature: R&sub;&mu;&nu;;−½Rg&sub;&mu;&nu;;); &Lambda; = cosmological constant (vacuum energy density); T&sub;&mu;&nu;; = stress-energy tensor (matter, radiation, pressure, energy flux). The factor 8&pi;G/c&sup4; is chosen so GR reduces to Newtonian gravity in the weak-field limit.</div></div>
+<h3>Unpacking Each Side</h3>
+<p><strong>Left side — the Einstein tensor G_μν:</strong> Built from the Riemann curvature tensor R^ρ_σμν, which captures the failure of parallel transport around closed loops. Carry a vector around a loop in curved spacetime: it returns rotated. The angle of rotation encodes the curvature. G_μν is the specific combination of Riemann tensor components with zero covariant divergence — guaranteed by the Bianchi identity. This zero divergence automatically implies conservation of energy-momentum on the right side.</p>
+<p><strong>Right side — the stress-energy tensor T_μν:</strong> The T₀₀ component is energy density; T₀ᵢ is energy flux / momentum density; Tᵢⱼ is the stress tensor (pressure and shear). For ordinary matter at rest, T_μν = diag(ρc², 0, 0, 0). For a perfect fluid: T_μν = (ρ + p/c²)u_μu_ν + pg_μν.</p>
+<div class="box key"><b>The Cosmological Constant</b><p>Einstein introduced Λ in 1917 to allow a static universe — then abandoned it as his "greatest mistake" when Hubble confirmed expansion. Since 1998, Λ has been reintroduced as dark energy: a constant vacuum energy density. It contributes a term that acts as a negative pressure, uniform and constant regardless of how matter dilutes. Its physical origin — why it has the observed tiny but non-zero value — is unknown and constitutes the cosmological constant problem.</p></div>
+<div class="box ref"><b>Reference</b><p>Einstein, A. (1915). Die Feldgleichungen der Gravitation. <em>Sitzungsberichte der Preussischen Akademie der Wissenschaften</em>, November 25, 844–847.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>G_μν (curvature) = 8πG/c⁴ · T_μν (matter-energy): a quantitative equation between the geometry of spacetime and its physical content.</li><li>The Bianchi identity guarantees zero divergence of G_μν, which automatically enforces conservation of energy and momentum on the right side.</li><li>The cosmological constant Λ — introduced, abandoned, and revived — represents dark energy: a constant vacuum energy density whose physical origin remains unknown.</li></ul></div>`,
+  "5.5": `<p class="intro">Within weeks of Einstein publishing his field equations, Karl Schwarzschild — writing from the Russian Front — found the first exact solution. It describes the spacetime geometry outside any spherically symmetric mass and remains the foundation of black hole physics.</p>
+<h3>The Schwarzschild Metric</h3>
+<p>Outside a spherically symmetric, non-rotating, uncharged mass M, the exact solution is:</p>
+<div class="box eq"><b>Schwarzschild Metric</b><div class="eqf">ds&sup2; = &minus;(1&minus;r&sub;s;/r)c&sup2;dt&sup2; + dr&sup2;/(1&minus;r&sub;s;/r) + r&sup2;d&Omega;&sup2;</div><div class="eqs">r&sub;s; = 2GM/c&sup2; is the Schwarzschild radius. For the Sun: r&sub;s; = 3 km (vs. actual radius 696,000 km). For Earth: r&sub;s; = 9 mm. For a 30 solar-mass black hole: r&sub;s; &asymp; 89 km. d&Omega;&sup2; is the solid angle element.</div></div>
+<h3>Physical Content</h3>
+<p><strong>Gravitational time dilation:</strong> The factor (1−r_s/r) in the time component — clocks run slower deeper in the gravitational field. At r = 2r_s, rate = √(½) ≈ 71% of infinity. As r → r_s from outside, clock rate → 0: an infalling clock appears to freeze at the event horizon, as seen from outside.</p>
+<p><strong>The event horizon:</strong> At r = r_s, the time and radial components swap signs. Inside the horizon, the radial coordinate r becomes timelike — motion toward r = 0 becomes as obligatory as motion toward the future. The singularity at r = 0 is not a point in space; it is a moment in time, lying in the future of anything that crosses the horizon.</p>
+<p><strong>Newtonian limit:</strong> For r >> r_s, the metric gives g = GM/r² to first approximation — Newton's gravitation. GR corrections appear at order r_s/r. Mercury's orbit, where r_s/r ~ 10⁻⁸, generates the 43 arcsecond/century precession.</p>
+<div class="box ex"><b>Schwarzschild's Letter to Einstein</b><p>"As you see, the war treated me kindly enough, in spite of the heavy gunfire, to allow me to get away from it all and take this walk in the land of your ideas." — Karl Schwarzschild, December 1915. He died of illness at the front six months later, aged 42, having derived both the exterior (vacuum) solution and the interior (uniform-density sphere) solution.</p></div>
+<div class="box ref"><b>Reference</b><p>Schwarzschild, K. (1916). Über das Gravitationsfeld eines Massenpunktes nach der Einsteinschen Theorie. <em>Sitzungsberichte der Königlich Preussischen Akademie der Wissenschaften</em>, 7, 189–196.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>The Schwarzschild metric is the exact GR solution outside any spherically symmetric mass; r_s = 2GM/c² sets the fundamental scale.</li><li>Gravitational time dilation follows directly: clock rate factor √(1−r_s/r), approaching zero at the event horizon.</li><li>Inside the horizon, r becomes timelike — the singularity at r=0 is a future moment in time, not a point in space.</li></ul></div>`,
+  "6.1": `<p class="intro">Before the 1919 eclipse confirmed light bending, general relativity had already survived its first critical test quietly and precisely: the 43 arcseconds per century anomaly in Mercury's orbit that had defied Newtonian explanation for sixty years.</p>
+<h3>The Anomaly</h3>
+<p>Mercury's orbital ellipse slowly rotates — perihelion precession. Most (~5,557 arcseconds/century) is explained by gravitational perturbations from other planets. A residual of 43.11 ± 0.45 arcseconds/century remained after all Newtonian corrections. Proposals ranged from an unseen inner planet ("Vulcan") to a slight deviation from the 1/r² law. None worked. The anomaly was known since Le Verrier's analysis in 1859 — forty years before Einstein's birth.</p>
+<div class="box eq"><b>GR Precession Formula</b><div class="eqf">&Delta;&phi; = 6&pi;GM / [a(1&minus;e&sup2;)c&sup2;] per orbit</div><div class="eqs">M = Solar mass; a = semi-major axis (5.79&times;10&sup1;&sup0; m for Mercury); e = eccentricity (0.2056). Result: 43.03 arcseconds/century. The agreement with observation was exact within measurement error — with no free parameters.</div></div>
+<h3>Einstein's Reaction — and What It Means</h3>
+<p>When Einstein calculated this in November 1915 — the day before submitting the final field equations — he later wrote he experienced "heart palpitations" and was "beside himself with joy." For three years he had been trying to explain Mercury's precession with incomplete versions of his theory. The exact agreement was not just a successful prediction; it was proof the equations were right. He told colleagues he could not work for three days afterward.</p>
+<div class="box ex"><b>Why Mercury and Not Other Planets?</b><p>The GR precession scales as 1/(a(1−e²)) — inversely with orbital size, amplified by eccentricity. Mercury's orbit is smallest and significantly eccentric. Earth's GR precession: ~3.8 arcseconds/century; Saturn's: ~1.8. All are now measured and match GR. Mercury was simply the first case large enough to exceed 19th-century measurement noise.</p></div>
+<div class="box note"><b>Misconception</b><p>"GR was first confirmed in 1919 by the eclipse." The 1919 eclipse was more dramatic and publicised, but Mercury's precession was a prior and equally rigorous confirmation — arguably more so, since it explained a decades-old anomaly with no adjustable parameters.</p></div>
+<div class="box ref"><b>Reference</b><p>Einstein, A. (1915). Erklärung der Perihelbewegung des Merkur aus der allgemeinen Relativitätstheorie. <em>Sitzungsberichte der Preussischen Akademie der Wissenschaften</em>, November 18, 831–839.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>Mercury's 43 arcseconds/century anomaly had resisted Newtonian explanation for 60 years; GR computed exactly 43.03 with zero free parameters.</li><li>Einstein calculated this the day before submitting the final field equations — the exact agreement convinced him the theory was correct.</li><li>This was GR's first confirmation, predating the 1919 eclipse — and in some respects the more rigorous one.</li></ul></div>`,
+  "6.2": `<p class="intro">Einstein predicted in 1911 that gravity must bend light — a consequence of the equivalence principle. The 1919 solar eclipse expedition tested this prediction and, in doing so, transformed Einstein from a well-regarded physicist into the first scientific celebrity of the modern era.</p>
+<h3>Two Different Predictions</h3>
+<p>Newtonian gravity applied to a photon with effective mass E/c² gives deflection 0.875 arcseconds at the Sun's limb. General relativity gives exactly twice this: 1.75 arcseconds. The factor of two difference arises because GR curves both the temporal and spatial parts of the metric. Newtonian reasoning captures only the spatial contribution. Distinguishing these values requires observations during a total solar eclipse, when stars near the Sun's limb become visible.</p>
+<div class="box eq"><b>GR Light Deflection at Solar Limb</b><div class="eqf">&delta; = 4GM&sub;&odot;; / (c&sup2;R&sub;&odot;) = 1.75&Prime;</div><div class="eqs">M&sub;&odot;; = Solar mass; R&sub;&odot;; = Solar radius. Deflection falls as 1/(impact parameter) for rays farther from the Sun. The 1919 Sobral result: 1.79&plusmn;0.16&Prime; — consistent with GR, inconsistent with the Newtonian 0.875&Prime;.</div></div>
+<h3>Modern Gravitational Lensing</h3>
+<p>This same principle, operating at galaxy-cluster scales, produces some of the most striking images in observational astronomy. A massive galaxy cluster bends and distorts light from background objects — producing multiple images, arcs, and in perfect alignment, complete <strong>Einstein rings</strong>. The ring radius encodes the lens mass and geometry. The Hubble Space Telescope and JWST now routinely use strong gravitational lensing to map dark matter distributions and observe the very early universe, magnified by factors of 10–100 by intervening clusters.</p>
+<div class="box ex"><b>Einstein on Rings (1936)</b><p>Einstein computed the Einstein ring geometry in 1936 and published it reluctantly — at the urging of a Czech engineer who wrote to him. His comment: "Of course, there is not the slightest prospect of observing this phenomenon directly." He was wrong. The first confirmed Einstein ring was detected by the VLA radio telescope in 1987. JWST regularly produces them.</p></div>
+<div class="box ref"><b>Reference</b><p>Dyson, F.W., Eddington, A.S. &amp; Davidson, C. (1920). A determination of the deflection of light by the Sun's gravitational field from observations made at the total eclipse of May 29, 1919. <em>Philosophical Transactions of the Royal Society A</em>, 220, 291–333.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>GR predicts 1.75 arcseconds of light deflection at the Sun's limb — exactly twice the Newtonian prediction; the factor of two tests the full metric (time + space components).</li><li>The 1919 Eddington expedition confirmed GR's value, ruling out the Newtonian prediction at high confidence.</li><li>Modern gravitational lensing is this effect at cosmological scales: Einstein rings, arcs, and cluster lensing now routinely map dark matter and magnify the early universe.</li></ul></div>`,
+  "6.3": `<p class="intro">Gravitational time dilation is not only theoretically profound — it is practically critical. Every GPS satellite operates in a weaker gravitational field and moves at high velocity relative to Earth's surface. Without relativistic corrections computed to microsecond precision, navigation would be wrong by kilometres within a day.</p>
+<h3>Pound-Rebka (1959) — Laboratory Confirmation</h3>
+<p>The Mössbauer effect allows recoil-free emission and absorption of gamma rays by nuclei in a crystal lattice, with extraordinary frequency precision. A gamma source at the top of a 22.5 m tower at Harvard produced photons detected at the bottom. Photons climbing out of a gravitational field lose energy (gravitational redshift). The measured fractional frequency shift: (2.46 ± 0.17) × 10⁻¹⁵. The GR prediction: 2.57 × 10⁻¹⁵. Agreement within experimental error — gravitational time dilation confirmed across a 22-metre height difference in a university building.</p>
+<div class="box eq"><b>Net GPS Relativistic Correction</b><div class="eqf">+45.9 &mu;s/day (GR: altitude) &minus; 7.2 &mu;s/day (SR: velocity) = +38.4 &mu;s/day</div><div class="eqs">GR effect: satellites at 20,200 km altitude are in weaker gravity — their clocks run fast. SR effect: satellites orbit at ~3.9 km/s — their clocks run slow. Net: +38.4 &mu;s/day. At c, this corresponds to a position error accumulation of ~11.5 km/day if uncorrected.</div></div>
+<h3>The GPS Correction in Practice</h3>
+<p>GPS satellite clocks are deliberately pre-adjusted before launch — their oscillators run at a slightly reduced rate (10.22999999543 MHz instead of 10.23 MHz) so that after both relativistic effects are applied, they tick at the correct rate from the perspective of ground receivers. This is not a software patch applied in the field — it is a physical design specification built into the clock hardware. Without it, position errors accumulate at 11.5 km/day, rendering the system useless within hours of first operation.</p>
+<div class="box note"><b>Misconception</b><p>"GPS is just a minor engineering relativistic correction." It is the most operationally tested simultaneous application of both SR and GR in history. The corrections are not small compared to the required precision: 38.4 μs/day is far larger than the 20–30 ns timing precision GPS requires. Relativity is not a refinement at GPS altitudes — it is the dominant error source without correction.</p></div>
+<div class="box ref"><b>Reference</b><p>Pound, R.V. &amp; Rebka, G.A. (1959). Gravitational red-shift in nuclear resonance. <em>Physical Review Letters</em>, 3(9), 439–441. / Ashby, N. (2002). Relativity and the Global Positioning System. <em>Physics Today</em>, 55(5), 41–47.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>Pound-Rebka confirmed gravitational time dilation at 22 metres inside a building — matching GR's prediction of 2.57×10⁻¹⁵ fractional frequency shift.</li><li>GPS requires two simultaneous corrections: +45.9 μs/day (GR altitude) and −7.2 μs/day (SR velocity), netting +38.4 μs/day.</li><li>Without the correction, position errors accumulate at ~11.5 km/day — GPS clock hardware is physically pre-adjusted at manufacture to account for both effects.</li></ul></div>`,
+  "6.4": `<p class="intro">Predicted by Schwarzschild in 1916, dismissed as a curiosity for decades, confirmed by stellar orbital data in the 1990s, and directly imaged in 2019 — black holes are the most extreme confirmation that GR describes reality rather than approximating it.</p>
+<h3>The Event Horizon</h3>
+<p>The event horizon is not a physical surface — no material barrier exists there. It is a boundary in spacetime: the set of events from which no future-directed causal path escapes to infinity. Inside the horizon, the Schwarzschild radial coordinate r becomes timelike — decreasing r is as obligatory as moving toward the future. The singularity at r = 0 is not a place; it is a moment in time that lies in the future of any infalling observer. No force, no matter how large, can reverse this: it would require exceeding c in the local frame.</p>
+<div class="box eq"><b>Hawking Temperature</b><div class="eqf">T&sub;H; = &hbar;c&sup3; / (8&pi;GMk&sub;B;)</div><div class="eqs">Black holes radiate thermally at temperature T_H (Hawking, 1974). For a solar-mass black hole: T_H &asymp; 60 nK — negligible against the 2.7 K CMB. This formula unites &hbar; (quantum mechanics), c and G (GR), and k_B (thermodynamics) — the most compact natural unification of all fundamental constants in physics.</div></div>
+<h3>The First Image — M87* (2019)</h3>
+<p>The Event Horizon Telescope achieved Earth-scale interferometry by phase-coherently combining eight radio observatory arrays at 1.3 mm wavelength. The target: M87*, a 6.5 × 10⁹ solar mass black hole 55 million light-years away. The image shows a bright ring of photons (the photon sphere, where gravity bends light into near-circular orbits) surrounding a dark shadow (the event horizon silhouette). Ring diameter and asymmetry match GR predictions for a Kerr (rotating) black hole at the measured mass. In 2022, the EHT also imaged Sgr A*, the 4 million solar mass black hole at the Milky Way's centre.</p>
+<div class="box note"><b>Misconception</b><p>"Black holes suck in everything nearby." At large distances, a black hole's gravity is identical to any other mass of equal size. If the Sun were replaced by a solar-mass black hole, Earth's orbit would be unchanged. Black holes are only qualitatively different from normal gravity within a few Schwarzschild radii — where GR deviations from Newtonian gravity become large.</p></div>
+<div class="box ref"><b>Reference</b><p>Event Horizon Telescope Collaboration (2019). First M87 Event Horizon Telescope Results, Papers I–VI. <em>The Astrophysical Journal Letters</em>, 875(1), L1–L6.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>The event horizon is a causal boundary in spacetime, not a physical surface; inside it, decreasing r is obligatory — the singularity is a future moment, not a place.</li><li>Hawking temperature unites ħ, c, G, and k_B — the most natural combination of fundamental constants, though undetectably small for astrophysical black holes.</li><li>The 2019 EHT image of M87* shows a photon ring and shadow matching GR predictions for a 6.5-billion solar mass rotating black hole.</li></ul></div>`,
+  "6.5": `<p class="intro">Einstein predicted gravitational waves in 1916 from the linearised field equations — and then doubted whether they were real. On September 14, 2015, the question was settled permanently, opening an entirely new branch of astronomy.</p>
+<h3>What Gravitational Waves Are</h3>
+<p>Gravitational waves are oscillations in the metric tensor propagating at c from accelerating massive objects. Unlike electromagnetic waves, they interact extremely weakly with matter — passing through Earth, through the Sun, through galaxies with almost no absorption. A wave stretches and squeezes spacetime perpendicular to its direction of travel in a quadrupole pattern: as one dimension expands, the perpendicular contracts. The strain h = ΔL/L characterises the amplitude.</p>
+<div class="box eq"><b>Gravitational Wave Strain — GW150914</b><div class="eqf">h &asymp; 10&sup2;&sup1; &nbsp;&nbsp;&rArr;&nbsp;&nbsp; &Delta;L = 10&minus;&sup1;&sup8; m</div><div class="eqs">For LIGO's 4 km arms: &Delta;L = h &times; L = 10&sup2;&sup1; &times; 4,000 m = 4&times;10&minus;&sup1;&sup8; m. One one-thousandth the diameter of a proton. LIGO achieves this sensitivity using Fabry-Perot cavities that effectively extend the arm length to ~1,600 km by bouncing light ~400 times.</div></div>
+<h3>GW150914 and Its Aftermath</h3>
+<p>The signal lasted 0.2 seconds, sweeping from 35 to 150 Hz — a chirp audible if converted to sound. Matched to GR templates: two black holes of ~29 and ~36 solar masses, 1.3 billion light-years away, merging into a ~62 solar mass remnant. The missing ~3 solar masses were radiated as gravitational waves in 0.2 seconds — briefly exceeding the electromagnetic luminosity of all stars in the observable universe combined. Detected by LIGO Livingston and Hanford with a 7ms time-of-flight delay consistent with the sky location. Nobel Prize 2017.</p>
+<p>GW170817 (neutron star merger, 2017) was simultaneously detected in gravitational waves and across the full electromagnetic spectrum — inaugurating multi-messenger astronomy. It confirmed neutron star mergers as sites of heavy element nucleosynthesis (gold, platinum, uranium) and provided an independent measurement of H₀.</p>
+<div class="box ref"><b>Reference</b><p>Abbott, B.P. et al. (LIGO Scientific &amp; Virgo Collaborations, 2016). Observation of gravitational waves from a binary black hole merger. <em>Physical Review Letters</em>, 116(6), 061102.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>Gravitational wave strain h ≈ 10⁻²¹ required measuring ΔL = 10⁻¹⁸ m across 4 km arms — one-thousandth the diameter of a proton.</li><li>GW150914: two black holes merging 1.3 Gly away, releasing ~3 solar masses as gravitational wave energy in 0.2 seconds.</li><li>GW170817 (neutron star merger) launched multi-messenger astronomy and confirmed heavy element production in neutron star collisions.</li></ul></div>`,
+  "7.1": `<p class="intro">General relativity does not just describe gravity around stars and galaxies. Applied to the universe as a whole — treating it as a homogeneous, isotropic fluid — it generates the Friedmann equations: the dynamical equations governing cosmic expansion.</p>
+<h3>The FLRW Metric</h3>
+<p>The Friedmann-Lemaître-Robertson-Walker metric is the most general metric consistent with the cosmological principle (the universe is homogeneous and isotropic on large scales). It introduces the <strong>scale factor</strong> a(t) — a single function encoding how all comoving distances change with time:</p>
+<div class="box eq"><b>First Friedmann Equation</b><div class="eqf">H&sup2; = (&dot;a/a)&sup2; = (8&pi;G/3)&rho; &minus; kc&sup2;/a&sup2; + &Lambda;c&sup2;/3</div><div class="eqs">H = Hubble parameter; &rho; = total energy density (matter + radiation); k = spatial curvature (+1 spherical, 0 flat, &minus;1 hyperbolic). Current: k&asymp;0 (spatially flat, Planck 2018 to within 0.4%). The second Friedmann equation governs acceleration: &auml;/a = &minus;(4&pi;G/3)(&rho;+3p/c&sup2;) + &Lambda;c&sup2;/3.</div></div>
+<h3>Three Possible Universes</h3>
+<p><strong>k = +1:</strong> Positive curvature — a closed, finite universe like a 3-sphere. Gravity eventually halts expansion; the universe recollapses in a Big Crunch.</p>
+<p><strong>k = −1:</strong> Negative curvature — open, infinite, hyperbolic geometry. Expansion continues forever, decelerating.</p>
+<p><strong>k = 0:</strong> Spatially flat — the critical case. Current evidence strongly favours this. With Λ > 0, expansion accelerates regardless of k.</p>
+<div class="box ex"><b>Active Gravitational Source</b><p>The deceleration equation shows the active source of gravitational attraction is ρ + 3p/c². For ordinary matter: p ≈ 0, so source = ρ. For radiation: p = ρc²/3, source = 2ρ (radiation decelerates expansion more strongly). For dark energy with p = −ρc²: source = ρ + 3(−ρ) = −2ρ — <em>negative</em>. Dark energy gravitationally repels, causing accelerating expansion. This is the mathematical mechanism behind what Perlmutter and Riess observed in 1998.</p></div>
+<div class="box ref"><b>Reference</b><p>Friedmann, A. (1922). Über die Krümmung des Raumes. <em>Zeitschrift für Physik</em>, 10(1), 377–386. Published three years before Hubble's observations, predicting an expanding (or contracting) universe directly from GR.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>The scale factor a(t) encodes all of cosmic expansion — a single function derived from inserting the FLRW metric into Einstein's field equations.</li><li>The Friedmann equations govern a(t): the first gives the expansion rate, the second gives the acceleration (or deceleration).</li><li>Dark energy enters as negative active gravitational source (ρ + 3p/c² = −2ρ for w=−1), mechanically explaining accelerating expansion from the field equations.</li></ul></div>`,
+  "7.2": `<p class="intro">Hubble's 1929 paper established one of the most consequential observational facts in science: distant galaxies recede from us with velocity proportional to distance. Understanding what this actually means — and critically what it does not mean — is the distinction we explored previously.</p>
+<h3>Hubble's Law</h3>
+<p>Edwin Hubble combined Vesto Slipher's galaxy redshift measurements with Cepheid variable distance estimates to establish a linear relation between recession velocity and distance:</p>
+<div class="box eq"><b>Hubble's Law</b><div class="eqf">v&sub;rec; = H&sub;0; &times; d</div><div class="eqs">H&sub;0; &asymp; 70 km/s/Mpc (megaparsec = 3.09&times;10&sup2;&sup2; m). Every additional Mpc of distance adds ~70 km/s of recession. The Hubble tension: Planck CMB data gives H&sub;0; &asymp; 67.4 km/s/Mpc; local distance ladder measurements give ~73 km/s/Mpc. This 4–5&sigma; discrepancy is unresolved as of 2025 and may require physics beyond &Lambda;CDM.</div></div>
+<h3>Recession Is Not Motion Through Space</h3>
+<p>This is not described by SR's kinematics. Galaxies are not, in general, moving <em>through</em> spacetime — space between them is expanding. Every region grows simultaneously. Recession velocity is a coordinate velocity, not a local inertial velocity. A galaxy "receding at 2c" is not violating SR: no local observer measures anything exceeding c past them. Photons from that galaxy travel at c through each local patch they traverse. The expansion of the patches they cross is a global coordinate effect.</p>
+<div class="box key"><b>No Centre, No Edge</b><p>The rubber-band analogy (dots on stretching rubber) is useful but requires a critical caveat: the band has edges. The universe has none — as far as we know. Every point experiences every other point receding. There is no centre of expansion. The Big Bang did not happen at a point in space; it happened everywhere simultaneously. The universe did not expand <em>into</em> pre-existing space; space itself expanded. "Before the Big Bang" is like asking what is south of the South Pole.</p></div>
+<div class="box ref"><b>Reference</b><p>Hubble, E. (1929). A relation between distance and radial velocity among extra-galactic nebulae. <em>Proceedings of the National Academy of Sciences</em>, 15(3), 168–173. / Riess, A.G. et al. (2022). A Comprehensive Measurement of the Local Value of the Hubble Constant. <em>The Astrophysical Journal Letters</em>, 934(1), L7.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>Hubble's Law v = H₀d: recession velocity proportional to distance, with H₀ ≈ 70 km/s/Mpc — though its precise value is under active dispute (Hubble tension).</li><li>Galaxy recession is expansion of space, not motion through space — a global coordinate velocity, not a local inertial velocity limited by SR.</li><li>No centre, no edge: the Big Bang happened everywhere; the universe expanded from a hot dense state, not from a point into pre-existing space.</li></ul></div>`,
+  "7.3": `<p class="intro">We worked through this together in conversation. Here the goal is not to repeat that discussion but to build the complete technical picture: three distinct horizons, the precise mechanism by which CMB photons reached us from regions receding at ~50c, and why accelerating expansion changed everything going forward.</p>
+<h3>Three Distinct Horizons</h3>
+<p><strong>Hubble sphere (~14.5 Gly):</strong> The surface where recession velocity equals c at this moment. Galaxies beyond it recede faster than c right now. This is not a fixed boundary — it moves as H changes with time. It is a snapshot of the current expansion rate.</p>
+<p><strong>Particle horizon (~46.5 Gly):</strong> The boundary of the region from which light has had time to reach us since the Big Bang — the edge of the observable universe. It is larger than 13.8 Gly because space expanded while photons were travelling. It can only grow: as time passes, more of the universe enters our past light cone.</p>
+<p><strong>Event horizon (~16 Gly):</strong> The boundary beyond which no signal emitted today can ever reach us, due to accelerating expansion. This is the permanent causal limit introduced by dark energy. Unlike the particle horizon, it can shrink if acceleration continues.</p>
+<div class="box eq"><b>Comoving Particle Horizon</b><div class="eqf">d&sub;particle; = c &int;&sub;0;&sup;t&sub;0;; dt&prime;/a(t&prime;)</div><div class="eqs">Because a(t) was very small in the early universe, c/a was very large, and the integral accumulates rapidly. The 46.5 Gly result (vs. 13.8 Gly naive estimate) reflects this: early deceleration allowed photons to make rapid progress through the small, dense early universe.</div></div>
+<h3>Why CMB Photons Arrived from 50c-Recession Regions</h3>
+<p>The CMB was emitted ~380,000 years after the Big Bang. Those regions were receding at ~50c at emission. The photons did reach us because the universe was decelerating: the Hubble sphere expanded outward faster than the photons were swept back. A photon initially losing ground gradually found itself inside the Hubble sphere (as the sphere grew) and began making progress toward us. It spent ~13.8 billion years in transit — but it got here. The treadmill was running fast but slowing down.</p>
+<p>With dark energy's accelerating expansion, this rescue mechanism no longer operates for photons emitted today from beyond ~16 Gly. The Hubble sphere is no longer expanding fast enough to catch photons being pushed back by the recession. Those photons will never arrive.</p>
+<div class="box ref"><b>Reference</b><p>Davis, T.M. &amp; Lineweaver, C.H. (2004). Expanding confusion: common misconceptions of cosmological horizons and the superluminal expansion of the universe. <em>Publications of the Astronomical Society of Australia</em>, 21(1), 97–109. The definitive paper resolving these distinctions.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>Three distinct horizons: Hubble sphere (v_rec = c now, ~14.5 Gly), particle horizon (observable universe, ~46.5 Gly), event horizon (permanent causal limit, ~16 Gly).</li><li>CMB photons arrived from 50c-recession regions because early deceleration caused the Hubble sphere to expand past those photons, allowing them to make progress.</li><li>Accelerating expansion means photons from beyond ~16 Gly emitted today will never reach us — the event horizon, unlike the particle horizon, can shrink.</li></ul></div>`,
+  "7.4": `<p class="intro">In 1998, two independent teams studying Type Ia supernovae found that the universe's expansion is not decelerating — it is accelerating. This was the most surprising cosmological discovery since Hubble and required resurrecting Einstein's abandoned cosmological constant.</p>
+<h3>The Discovery</h3>
+<p>Type Ia supernovae have standardisable peak luminosities — their intrinsic brightness is determinable from their light-curve shape, making them "standard candles" for distance measurement. Both the Supernova Cosmology Project (Perlmutter) and the High-Z Supernova Team (Schmidt, Riess) found distant supernovae fainter than a decelerating universe would predict — meaning they were farther away than expected. The universe was not just expanding; expansion was accelerating. Nobel Prize 2011.</p>
+<div class="box eq"><b>Equation of State of Dark Energy</b><div class="eqf">p = w&rho;c&sup2; &nbsp;&nbsp; w &asymp; &minus;1</div><div class="eqs">Equation of state parameter w. Ordinary matter: w=0. Radiation: w=1/3. Cosmological constant: w=&minus;1 exactly (pressure is negative, equal in magnitude to energy density). Current best measurement: w = &minus;1.006&plusmn;0.045 (Planck 2018) — consistent with &Lambda; but not ruling out dynamic dark energy.</div></div>
+<h3>The Cosmological Constant Problem</h3>
+<p>The observed dark energy density is ρ_Λ ≈ 6 × 10⁻²⁷ kg/m³. Quantum field theory predicts that vacuum energy density from zero-point fluctuations of all quantum fields should be ~10¹²⁰ times larger. This 120-order-of-magnitude discrepancy is the worst quantitative prediction in all of theoretical physics — the gap between the expected and observed values is larger than any other known discrepancy in science.</p>
+<p>Potential resolutions include: anthropic selection (most vacua with large Λ don't allow structure and observers); supersymmetric cancellations (broken at unknown scale); dynamical dark energy (a field whose value has evolved toward zero, now near it); modified gravity at cosmological scales. None is convincingly established.</p>
+<div class="box ex"><b>The Coincidence Problem</b><p>Matter density dilutes as a⁻³ as space expands. Dark energy density stays constant. At early epochs, matter dominated enormously; in the far future, dark energy will dominate almost completely. We live in the narrow cosmic epoch when they are comparable. This is either a profound coincidence, evidence of anthropic selection, or a clue toward a dynamical dark energy — the "coincidence problem" has no satisfying resolution within the standard model.</p></div>
+<div class="box ref"><b>Reference</b><p>Riess, A.G. et al. (1998). Observational evidence from supernovae for an accelerating universe and a cosmological constant. <em>The Astronomical Journal</em>, 116(3), 1009–1038. / Perlmutter, S. et al. (1999). Measurements of Ω and Λ from 42 high-redshift supernovae. <em>The Astrophysical Journal</em>, 517(2), 565–586.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>1998 supernova data showed distant galaxies are farther than deceleration models predict — expansion is accelerating, driven by dark energy with w ≈ −1.</li><li>The cosmological constant problem: observed Λ is ~10¹²⁰ times smaller than QFT's naive vacuum energy prediction — the largest quantitative discrepancy in physics.</li><li>The coincidence problem: matter and dark energy are comparable in density today despite diluting at very different rates — no consensus explanation exists.</li></ul></div>`,
+  "8.1": `<p class="intro">General relativity is extraordinarily successful. It has passed every experimental test to date. And yet it contains within itself the seeds of its own incompleteness: the theory predicts situations where its own equations become undefined and give no prescription for what happens next.</p>
+<h3>Singularity Theorems</h3>
+<p>In 1965 and 1970, Roger Penrose and Stephen Hawking proved that singularities are <em>generic</em> predictions of GR — not artefacts of special symmetry. The Penrose theorem: any spacetime satisfying the null energy condition and containing a trapped surface (a closed surface from which all outgoing light rays converge inward) must contain a future-incomplete geodesic. The Hawking theorem showed the Big Bang singularity is equally unavoidable. GR predicts its own mathematical breakdown at r = 0 (black holes) and t = 0 (Big Bang).</p>
+<div class="box eq"><b>Planck Length</b><div class="eqf">l&sub;P; = &radic;(&hbar;G/c&sup3;) &asymp; 1.616&times;10&minus;&sup3;&sup5; m</div><div class="eqs">The unique length scale constructible from &hbar; (quantum mechanics), G (gravity), and c (relativity). At this scale, quantum gravitational effects become order-one and GR's smooth continuum geometry is expected to break down. Currently ~20 orders of magnitude below any measurement capability.</div></div>
+<h3>The Black Hole Information Paradox</h3>
+<p>Hawking showed in 1974 that black holes radiate thermally — emitting photons whose spectrum carries no information about the infalling material. As the black hole evaporates completely, all information about the initial state is apparently lost. This violates <strong>unitarity</strong> — the foundational quantum mechanical principle that physical evolution is reversible and information is conserved. Either information is genuinely destroyed (quantum mechanics fails) or it is somehow encoded in Hawking radiation (GR fails inside black holes). Recent proposals include black hole complementarity, firewalls (Almheiri et al., 2013), and holographic approaches using the AdS/CFT correspondence. No resolution is fully established.</p>
+<div class="box ex"><b>Why Singularities Are a Fundamental Problem</b><p>A singularity in GR is not like a divergence in a weather model, where you refine the mesh. It means the theory cannot predict what happens next — the geodesic ends and the formalism provides no continuation. GR is not merely inaccurate at singularities; it is mathematically undefined. This is the clearest signal that a deeper theory is needed — one that resolves the divergence rather than smoothing over it.</p></div>
+<div class="box ref"><b>Reference</b><p>Penrose, R. (1965). Gravitational collapse and space-time singularities. <em>Physical Review Letters</em>, 14(3), 57–59. / Hawking, S.W. (1975). Particle creation by black holes. <em>Communications in Mathematical Physics</em>, 43(3), 199–220.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>Penrose-Hawking singularity theorems: singularities are generic predictions of GR — not special-case curiosities. The theory predicts its own breakdown.</li><li>The Planck length (~10⁻³⁵ m) marks where quantum gravitational effects become dominant and GR's smooth geometry fails.</li><li>The black hole information paradox sits at the intersection of GR and QM: Hawking radiation apparently destroys information, violating quantum unitarity — unresolved as of 2025.</li></ul></div>`,
+  "8.2": `<p class="intro">General relativity and quantum mechanics are the two most successful physical theories ever constructed. Each is confirmed to extraordinary precision in its domain. They are also mutually incompatible at their foundations — and combining them is the deepest unsolved problem in theoretical physics.</p>
+<h3>Why Combination Fails</h3>
+<p>Quantum mechanics requires a fixed spacetime background — a classical stage on which quantum fields evolve. General relativity says the stage is dynamical — curved by what is on it, fluctuating with quantum uncertainty. In a quantum theory of gravity, spacetime itself would be in quantum superposition. The notion of a definite geometry would dissolve. Standard quantum field theory has no framework for this.</p>
+<p>More precisely: GR is perturbatively non-renormalisable. When you compute quantum gravitational corrections using standard QFT methods, infinitely many independent parameters appear — each new power of energy/Planck mass introduces a new counterterm not fixed by lower-energy measurements. The theory loses all predictive power at Planck energies.</p>
+<div class="box key"><b>String Theory</b><p>The leading candidate for quantum gravity. Fundamental objects are one-dimensional strings; point particles are different vibrational modes of strings. Consistency requires ~10 or 11 spacetime dimensions. The theory is UV-finite and naturally contains a spin-2 graviton. Problems: the "landscape" of ~10⁵⁰⁰ possible vacua (no unique prediction for our universe), no confirmed experimental prediction accessible at current energies, and the full non-perturbative formulation remains incomplete.</p></div>
+<div class="box key"><b>Loop Quantum Gravity</b><p>Takes the opposite approach: quantise GR directly without extra dimensions. Space becomes discrete at the Planck scale — built from spin network graphs, with area and volume having discrete eigenvalue spectra. The Big Bang resolves into a "Big Bounce." Problems: recovering smooth classical spacetime from discrete quantum geometry is technically difficult, and natural coupling to the Standard Model fields remains elusive.</p></div>
+<div class="box ref"><b>Reference</b><p>Rovelli, C. (2004). <em>Quantum Gravity</em>. Cambridge University Press. / Polchinski, J. (1998). <em>String Theory</em>, vols. 1–2. Cambridge University Press.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>GR and QM are incompatible at foundations: QM requires a fixed spacetime background; GR makes spacetime dynamical and subject to the same fluctuations as any other field.</li><li>String theory (UV-finite, graviton included, extra dimensions required) and loop quantum gravity (discrete spacetime, direct GR quantisation) are leading approaches — both incomplete.</li><li>Quantum gravity is needed to resolve the Big Bang and black hole singularities, the information paradox, and the structure of spacetime below the Planck length.</li></ul></div>`,
+  "8.3": `<p class="intro">Relativity did not just change physics. It changed what it means to do physics — what questions are well-posed, what constitutes an explanation, and what "objective reality" means. These philosophical consequences are built directly into the mathematics.</p>
+<h3>The Block Universe</h3>
+<p>Minkowski spacetime implies what philosophers call the <strong>block universe</strong> or eternalism: all spacetime events — past, present, future — exist with equal ontological status. "Now" is not a privileged moment in the fabric of reality; it is an observer-dependent slice through a four-dimensional structure that exists timelessly. The subjective feeling of time "flowing" has no counterpart in the formalism. Einstein was explicit: in a 1955 condolence letter, he wrote "the distinction between past, present and future is only a stubbornly persistent illusion." Whether one accepts this literally or treats it as a statement about the limits of physics rather than the nature of consciousness is an open question — but the physics clearly cannot support a frame-independent, universal present.</p>
+<div class="box ex"><b>Gödel's Rotating Universe (1949)</b><p>Kurt Gödel — working at the Institute for Advanced Study alongside Einstein — found an exact solution to the field equations for a rotating universe containing <strong>closed timelike curves</strong>: worldlines that loop back on themselves, allowing a traveller to return to their own past. Einstein was disturbed by this. Gödel's intent was philosophical: if GR permits closed timelike curves, then the directed flow of time cannot be a fundamental feature of reality — it must emerge from boundary conditions or thermodynamics, not from the spacetime geometry itself. GR's field equations alone do not prohibit time travel; additional physical conditions must be imposed.</p></div>
+<div class="box key"><b>Invariants and What Is Real</b><p>We opened this course with the observation that relativity is a theory of invariants. We close with the philosophical implication: what is "really real" in physics may be precisely the invariants. Coordinate-dependent quantities — positions, time intervals, velocities — are frame artefacts, observer-dependent shadows of the underlying structure. The spacetime interval, rest mass, proper time, the light cone structure — these are identical for all observers and constitute the genuine physical content. This position — that the mathematical invariants of the theory correspond to physical reality — is called structural realism. Minkowski said space and time separately would "fade into mere shadows." The invariant spacetime interval preserves what is real.</p></div>
+<div class="box ref"><b>Reference</b><p>Gödel, K. (1949). An example of a new type of cosmological solution of Einstein's field equations of gravitation. <em>Reviews of Modern Physics</em>, 21(3), 447–450. / Sklar, L. (1974). <em>Space, Time, and Spacetime</em>. University of California Press.</p></div>
+<div class="summary"><h4>What You Learned</h4><ul><li>The block universe: Minkowski spacetime implies past, present, and future exist equally — the flow of time has no counterpart in the formalism and may be perspectival or thermodynamic.</li><li>Gödel's rotating universe solution contains closed timelike curves — GR's field equations alone do not prohibit time travel; additional physical conditions must be assumed.</li><li>The deepest lesson of relativity: the invariants — spacetime intervals, proper time, rest mass, the light cone — are the physically real quantities. Coordinate-dependent values are frame artefacts.</li></ul></div>`
+};
+
+// ── Course metadata ──────────────────────────────────────────────────
+const MODULES = [{"id": "01", "title": "The Pre-Einstein Crisis", "color": "#8C698C", "lessons": [{"id": "1.1", "title": "Galilean Relativity and Absolute Space"}, {"id": "1.2", "title": "Maxwell's Equations and the Light Problem"}, {"id": "1.3", "title": "The Michelson-Morley Experiment"}, {"id": "1.4", "title": "Lorentz and Poincaré — The Near-Misses"}]}, {"id": "02", "title": "Special Relativity", "color": "#D3545F", "lessons": [{"id": "2.1", "title": "Einstein's Two Postulates"}, {"id": "2.2", "title": "The Death of Absolute Simultaneity"}, {"id": "2.3", "title": "Time Dilation — Derived from First Principles"}, {"id": "2.4", "title": "Length Contraction and the Ladder Paradox"}, {"id": "2.5", "title": "Lorentz Transformations and Velocity Addition"}]}, {"id": "03", "title": "Geometry of Spacetime", "color": "#C9954A", "lessons": [{"id": "3.1", "title": "Minkowski Spacetime — The Stage of All Physics"}, {"id": "3.2", "title": "The Spacetime Interval — What Is Truly Invariant"}, {"id": "3.3", "title": "Reading Minkowski Diagrams"}, {"id": "3.4", "title": "The Twin Paradox — Fully Resolved"}, {"id": "3.5", "title": "Causality, Light Cones, and the Structure of Time"}]}, {"id": "04", "title": "Mass, Energy and Momentum", "color": "#5F3C3F", "lessons": [{"id": "4.1", "title": "E = mc² — Derivation and Deep Meaning"}, {"id": "4.2", "title": "Relativistic Momentum and the Speed Limit"}, {"id": "4.3", "title": "Four-Vectors — The Elegant Unification"}]}, {"id": "05", "title": "General Relativity", "color": "#8C698C", "lessons": [{"id": "5.1", "title": "The Equivalence Principle"}, {"id": "5.2", "title": "Curved Spacetime — Geometry as Physics"}, {"id": "5.3", "title": "Geodesics — The Straightest Paths Possible"}, {"id": "5.4", "title": "Einstein's Field Equations"}, {"id": "5.5", "title": "The Schwarzschild Solution"}]}, {"id": "06", "title": "Experimental Triumphs", "color": "#D3545F", "lessons": [{"id": "6.1", "title": "Mercury's Perihelion — The First Confirmation"}, {"id": "6.2", "title": "Gravitational Lensing and the 1919 Eclipse"}, {"id": "6.3", "title": "Gravitational Time Dilation and GPS"}, {"id": "6.4", "title": "Black Holes — From Theory to First Image"}, {"id": "6.5", "title": "Gravitational Waves — LIGO and New Astronomy"}]}, {"id": "07", "title": "Relativity and the Cosmos", "color": "#C9954A", "lessons": [{"id": "7.1", "title": "Friedmann Equations — GR Applied to the Universe"}, {"id": "7.2", "title": "Hubble's Discovery and What Expansion Means"}, {"id": "7.3", "title": "Superluminal Recession — No Contradiction"}, {"id": "7.4", "title": "Dark Energy and the Accelerating Universe"}]}, {"id": "08", "title": "The Open Frontier", "color": "#5F3C3F", "lessons": [{"id": "8.1", "title": "Where General Relativity Breaks Down"}, {"id": "8.2", "title": "Quantum Gravity — The Unsolved Problem"}, {"id": "8.3", "title": "Relativity's Philosophical Legacy"}]}];
+
+const LESSON_ORDER = MODULES.flatMap(m => m.lessons.map(l => ({
+  id: l.id, title: l.title, mod: m.title, modId: m.id, color: m.color
+})));
+
+// ── State ────────────────────────────────────────────────────────────
+let currentLessonId = null;
+let completed = new Set(JSON.parse(localStorage.getItem('rc_done') || '[]'));
+let qaOpen = false;
+let qaHistory = [];
+let currentLessonTitle = '';
+
+// ── Init ─────────────────────────────────────────────────────────────
+(function init() {
+  // Build home grid
+  const grid = document.getElementById('home-grid');
+  MODULES.forEach(m => {
+    const card = document.createElement('div');
+    card.className = 'home-card';
+    card.style.borderTop = `2px solid ${m.color}`;
+    card.innerHTML = `<div class="home-card-mod">MODULE ${m.id}</div>
+      <div class="home-card-title">${m.title}</div>
+      <div class="home-card-count">${m.lessons.length} lessons</div>`;
+    card.onclick = () => openLesson(m.lessons[0].id);
+    grid.appendChild(card);
+  });
+
+  // Open first sidebar module
+  const firstHeader = document.querySelector('.mod-header');
+  if (firstHeader) { firstHeader.classList.add('open'); firstHeader.nextElementSibling.classList.add('open'); }
+
+  // Mark completed lessons
+  completed.forEach(id => {
+    const item = document.getElementById('li-'+id);
+    if (item) item.classList.add('completed');
+  });
+
+  updateProgress();
+})();
+
+// ── Sidebar ───────────────────────────────────────────────────────────
+function toggleMod(el) {
+  el.classList.toggle('open');
+  el.nextElementSibling.classList.toggle('open');
+}
+
+// ── Lesson navigation ─────────────────────────────────────────────────
+function openLesson(id) {
+  const meta = LESSON_ORDER.find(l => l.id === id);
+  if (!meta) return;
+  currentLessonId = id;
+  currentLessonTitle = meta.title;
+  qaHistory = [];
+  document.getElementById('qa-msgs').innerHTML = '';
+
+  // Show lesson view
+  document.getElementById('home').style.display = 'none';
+  document.getElementById('lv').classList.add('active');
+
+  // Populate
+  document.getElementById('lm-badge').textContent = 'MODULE ' + meta.modId;
+  document.getElementById('lm-badge').style.background = meta.color;
+  document.getElementById('lm-num').textContent = id;
+  document.getElementById('lt').textContent = meta.title;
+  document.getElementById('lb2').innerHTML = C[id] || '<p>Content loading…</p>';
+  
+  const mdb = document.getElementById('mdb');
+  if (completed.has(id)) { mdb.textContent = '✓ Completed'; mdb.classList.add('done'); }
+  else { mdb.textContent = 'Mark complete'; mdb.classList.remove('done'); }
+
+  // Sidebar active state
+  document.querySelectorAll('.lesson-item').forEach(el => el.classList.remove('active'));
+  const li = document.getElementById('li-'+id);
+  if (li) { 
+    li.classList.add('active');
+    // ensure parent module is open
+    const lessons = li.closest('.mod-lessons');
+    if (lessons && !lessons.classList.contains('open')) {
+      lessons.classList.add('open');
+      lessons.previousElementSibling.classList.add('open');
+    }
+  }
+  document.getElementById('lv').scrollTop = 0;
+}
+
+function navLesson(dir) {
+  const idx = LESSON_ORDER.findIndex(l => l.id === currentLessonId);
+  const next = LESSON_ORDER[idx + dir];
+  if (next) openLesson(next.id);
+}
+
+function showHome() {
+  document.getElementById('home').style.display = '';
+  document.getElementById('lv').classList.remove('active');
+  document.querySelectorAll('.lesson-item').forEach(el => el.classList.remove('active'));
+  currentLessonId = null;
+}
+
+function markDone() {
+  if (!currentLessonId) return;
+  const mdb = document.getElementById('mdb');
+  if (completed.has(currentLessonId)) {
+    completed.delete(currentLessonId);
+    mdb.textContent = 'Mark complete'; mdb.classList.remove('done');
+    const li = document.getElementById('li-'+currentLessonId);
+    if (li) li.classList.remove('completed');
+  } else {
+    completed.add(currentLessonId);
+    mdb.textContent = '✓ Completed'; mdb.classList.add('done');
+    const li = document.getElementById('li-'+currentLessonId);
+    if (li) li.classList.add('completed');
+  }
+  localStorage.setItem('rc_done', JSON.stringify([...completed]));
+  updateProgress();
+}
+
+function updateProgress() {
+  const total = LESSON_ORDER.length;
+  const done = completed.size;
+  const pct = Math.round(done/total*100);
+  document.getElementById('pf').style.width = pct+'%';
+  document.getElementById('pl').textContent = done+' / '+total;
+}
+
+// ── Q&A ───────────────────────────────────────────────────────────────
+function toggleQA() {
+  qaOpen = !qaOpen;
+  document.getElementById('qap').classList.toggle('closed', !qaOpen);
+  document.getElementById('qa-toggle').textContent = qaOpen ? '▼' : '▲';
+}
+
+function qaKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendQA(); }
+}
+
+async function sendQA() {
+  const inp = document.getElementById('qa-in');
+  const q = inp.value.trim();
+  if (!q) return;
+  inp.value = '';
+
+  const lessonCtx = currentLessonId ? 
+    `Current lesson: ${currentLessonId} — "${currentLessonTitle}"` : 
+    'Student is browsing the course home screen.';
+
+  appendMsg('user', q);
+  qaHistory.push({ role:'user', content: lessonCtx + '\n\nStudent question: ' + q });
+
+  const send = document.getElementById('qa-send');
+  send.disabled = true;
+
+  const thinking = document.createElement('div');
+  thinking.className = 'qa-thinking';
+  thinking.id = 'qa-thinking';
+  thinking.textContent = 'Thinking…';
+  document.getElementById('qa-msgs').appendChild(thinking);
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system: `You are a rigorous, precise guide for an interactive course on Einstein's theories of relativity. The student is Amit — a technically sophisticated learner with an engineering background and genuine mathematical depth. He has completed formal study of calculus and linear algebra and is revisiting physics with fresh conceptual rigour.
+
+Key context about what this student already knows from prior discussion:
+1. Relativity is fundamentally a theory of invariants, not relativism. Einstein wanted to call it Invariantentheorie. The spacetime interval s²=c²t²−x²−y²−z² is the central invariant. Space and time separately are projections of a deeper observer-independent structure.
+2. Superluminal recession is consistent with SR — expansion of space is not motion through space. The CMB photons reached us from regions receding at ~50c because early deceleration caused the Hubble sphere to expand past those photons. He understands the three distinct horizons (Hubble sphere, particle horizon, event horizon).
+3. The twin paradox and its geometric resolution — shorter worldline in spacetime corresponds to less proper time (inverse of Euclidean intuition).
+
+Respond with genuine depth and precision. Do not simplify. Surface open questions, live debates, and unresolved tensions. Historical and mathematical context are valued. If the question touches on connections between lessons, make them explicit. Keep responses to 3–5 dense paragraphs. Do not use bullet points in your response.`,
+        messages: qaHistory
+      })
+    });
+    if (!resp.ok) throw new Error('API error '+resp.status);
+    const data = await resp.json();
+    const reply = data.content?.find(b => b.type==='text')?.text || 'No response.';
+    qaHistory.push({ role:'assistant', content: reply });
+    document.getElementById('qa-thinking')?.remove();
+    appendMsg('assistant', reply);
+  } catch(e) {
+    document.getElementById('qa-thinking')?.remove();
+    appendMsg('assistant', 'Connection error. Please try again.');
+  }
+  send.disabled = false;
+}
+
+function appendMsg(role, text) {
+  const msgs = document.getElementById('qa-msgs');
+  const div = document.createElement('div');
+  div.className = 'qa-msg '+role;
+  div.innerHTML = `<div class="qa-msg-role">${role === 'user' ? 'You' : 'Guide'}</div>
+    <div class="qa-msg-text">${text.replace(/\n/g,'<br>')}</div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  if (!qaOpen) toggleQA();
+}
+</script>
+</body>
+</html>
